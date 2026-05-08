@@ -1,0 +1,91 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           String        @id @default(cuid())
+  email        String        @unique
+  name         String?
+  transactions Transaction[]
+  budgets      Budget[]
+  debts        Debt[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+enum CategoryType {
+  ESSENTIAL
+  LIFESTYLE
+  INCOME
+  PROJECT
+}
+
+model Category {
+  id           String        @id @default(cuid())
+  name         String        @unique
+  type         CategoryType
+  transactions Transaction[]
+  budgets      Budget[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+}
+
+model Transaction {
+  id         String          @id @default(cuid())
+  userId     String
+  categoryId String?
+  amount     Float
+  type       TransactionType
+  title      String
+  notes      String?
+  date       DateTime        @default(now())
+  metadata   Json? // Untuk menyimpan raw response parsing AI / struk OCR
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  debts    Debt[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Budget {
+  id         String @id @default(cuid())
+  userId     String
+  categoryId String
+  amount     Float
+  month      Int
+  year       Int
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, categoryId, month, year])
+}
+
+model Debt {
+  id            String  @id @default(cuid())
+  userId        String
+  transactionId String?
+  debtorName    String
+  amount        Float
+  isPaid        Boolean @default(false)
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transaction Transaction? @relation(fields: [transactionId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
