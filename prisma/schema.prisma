@@ -53,6 +53,8 @@ model Transaction {
   notes      String?
   date       DateTime        @default(now())
   metadata   Json? // Untuk menyimpan raw response parsing AI / struk OCR
+  currency   String          @default("IDR")
+  tags       String[]        @default([])
 
   user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   category Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
