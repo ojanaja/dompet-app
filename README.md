@@ -34,3 +34,111 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Push Notifications Setup
+
+Dompet supports push notifications for debt reminders and budget alerts. Here's how to set it up:
+
+### 1. Generate VAPID Keys
+
+If you don't have VAPID keys yet, generate them using:
+
+```bash
+npm install -g web-push
+web-push generate-vapid-keys
+```
+
+This will output:
+- Public Key (for `NEXT_PUBLIC_VAPID_PUBLIC_KEY`)
+- Private Key (for `VAPID_PRIVATE_KEY`)
+
+### 2. Update Environment Variables
+
+Add these to your `.env` file:
+
+```env
+NEXT_PUBLIC_VAPID_PUBLIC_KEY="your_public_key_here"
+VAPID_PRIVATE_KEY="your_private_key_here"
+VAPID_EMAIL="mailto:your-email@example.com"
+CRON_SECRET="your_cron_secret_here"
+```
+
+### 3. Service Worker
+
+The service worker is automatically registered by Next.js PWA plugin. It's located at `public/sw-push.js`.
+
+### 4. Enable Notifications
+
+1. Go to Settings page in the app
+2. Click "Enable" in the Notifications section
+3. Allow notifications in your browser
+
+### 5. Testing Notifications
+
+#### Manual Test:
+```bash
+curl -X POST http://localhost:3000/api/debug/send-test-notification \
+  -H "Content-Type: application/json" \
+  -d '{"title":"Test","body":"Hello from Dompet!"}'
+```
+
+#### Debt Reminders Cron:
+To test debt reminders cron job:
+```bash
+curl -X POST http://localhost:3000/api/cron/debt-reminders \
+  -H "Authorization: Bearer your_cron_secret_here"
+```
+
+### 6. Production Deployment
+
+For production, set up a cron job to send daily reminders:
+
+#### Vercel Cron:
+Add to `vercel.json`:
+```json
+{
+  "crons": [
+    {
+      "path": "/api/cron/debt-reminders",
+      "schedule": "0 9 * * *"
+    }
+  ]
+}
+```
+
+#### GitHub Actions:
+Create `.github/workflows/debt-reminders.yml`:
+```yaml
+name: Debt Reminders
+on:
+  schedule:
+    - cron: '0 9 * * *'
+jobs:
+  send-reminders:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Debt Reminders
+        run: |
+          curl -X POST ${{ secrets.APP_URL }}/api/cron/debt-reminders \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
+```
+
+### Browser Support
+
+Push notifications work in:
+- Chrome 42+
+- Firefox 44+
+- Edge 17+
+- Safari 16.4+ (with limitations)
+
+### Troubleshooting
+
+1. **Notifications not showing**: Check browser permissions and ensure VAPID keys are correct
+2. **Service worker not registering**: Ensure PWA is enabled in `next.config.ts`
+3. **Subscription errors**: Check browser console for errors and verify VAPID keys format
+
+### Security Notes
+
+- Keep `VAPID_PRIVATE_KEY` and `CRON_SECRET` secure
+- Use HTTPS in production (required for push notifications)
+- Regularly rotate cron secrets in production
