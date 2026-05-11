@@ -142,3 +142,26 @@ Push notifications work in:
 - Keep `VAPID_PRIVATE_KEY` and `CRON_SECRET` secure
 - Use HTTPS in production (required for push notifications)
 - Regularly rotate cron secrets in production
+
+## Backup & Maintenance
+
+For production deployments, especially when using Docker volumes for PostgreSQL, it is critical to implement a backup strategy to prevent data loss.
+
+### PostgreSQL Volume Backup
+
+If running PostgreSQL via Docker, back up your database volume regularly:
+
+```bash
+# Example script to dump the database inside the container
+docker exec dompet_postgres pg_dump -U dompet_user dompet_db > /path/to/backup/dompet_backup_$(date +%Y%m%d).sql
+```
+
+You can set up a cron job on your host server to execute this script daily.
+
+### CI/CD Setup
+
+To ensure seamless deployments without downtime, it's recommended to set up CI/CD pipelines (e.g., using GitHub Actions or GitLab CI).
+
+1. **Automated Builds**: Configure your pipeline to run `npm run build` to catch any compilation errors before deploying.
+2. **Docker Watchtower**: If deploying via Docker, tools like [Watchtower](https://containrrr.dev/watchtower/) can automatically pull and restart containers when a new image is pushed to your container registry.
+3. **Database Migrations**: Ensure `npx prisma migrate deploy` runs as part of the deployment script before starting the new application container.

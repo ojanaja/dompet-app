@@ -3,12 +3,15 @@
 import { GlassCard } from '@/components/layout/GlassCard';
 import { ExpenseDonutChart } from '@/components/charts/ExpenseDonutChart';
 import { SpendingTrendChart } from '@/components/charts/SpendingTrendChart';
-import { ArrowDownLeft, ArrowUpRight, Minus } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { ArrowDownLeft, ArrowUpRight, Minus, ChevronLeft, ChevronRight } from 'lucide-react';
 import { formatRupiah } from '@/lib/format';
 import type { DashboardData } from '@/actions/dashboard.actions';
 
 interface DashboardContentProps {
     data: DashboardData | null;
+    currentMonth: number;
+    currentYear: number;
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -26,7 +29,29 @@ const MONO_COLORS: Record<string, string> = {
     INCOME: '#cccccc',
 };
 
-export function DashboardContent({ data }: DashboardContentProps) {
+export function DashboardContent({ data, currentMonth, currentYear }: DashboardContentProps) {
+    const router = useRouter();
+
+    const handlePrevMonth = () => {
+        let prevM = currentMonth - 1;
+        let prevY = currentYear;
+        if (prevM < 1) {
+            prevM = 12;
+            prevY -= 1;
+        }
+        router.push(`/dashboard?month=${prevM}&year=${prevY}`);
+    };
+
+    const handleNextMonth = () => {
+        let nextM = currentMonth + 1;
+        let nextY = currentYear;
+        if (nextM > 12) {
+            nextM = 1;
+            nextY += 1;
+        }
+        router.push(`/dashboard?month=${nextM}&year=${nextY}`);
+    };
+
     if (!data) {
         return (
             <GlassCard className="p-6 text-center">
@@ -35,13 +60,19 @@ export function DashboardContent({ data }: DashboardContentProps) {
         );
     }
 
-    const monthName = new Date().toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+    const monthName = new Date(currentYear, currentMonth - 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
 
     return (
         <>
-            {/* Month */}
-            <div className="px-1">
-                <p className="text-xs text-muted uppercase tracking-widest font-medium">{monthName}</p>
+            {/* Month Picker */}
+            <div className="flex items-center justify-between px-1">
+                <button onClick={handlePrevMonth} className="p-1 hover:bg-card rounded-md text-muted transition-colors">
+                    <ChevronLeft className="w-5 h-5" />
+                </button>
+                <p className="text-xs text-foreground uppercase tracking-widest font-medium">{monthName}</p>
+                <button onClick={handleNextMonth} className="p-1 hover:bg-card rounded-md text-muted transition-colors">
+                    <ChevronRight className="w-5 h-5" />
+                </button>
             </div>
 
             {/* Balance */}

@@ -1,3 +1,4 @@
+import 'server-only';
 import { generateObject, generateText } from 'ai';
 import { google } from '@ai-sdk/google';
 import { z } from 'zod';
