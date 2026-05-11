@@ -18,32 +18,32 @@ export class BaseRepository<
         this.model = model;
     }
 
-    async findAll(args?: Parameters<ModelDelegate['findMany']>[0]): Promise<Array<ReturnType<ModelDelegate['findMany']>>> {
+    async findAll(args?: Parameters<ModelDelegate['findMany']>[0]): Promise<Awaited<ReturnType<ModelDelegate['findMany']>>> {
         return this.model.findMany(args || {});
     }
 
-    async findById(id: string, include?: any): Promise<ReturnType<ModelDelegate['findUnique']> | null> {
+    async findById(id: string, include?: any): Promise<Awaited<ReturnType<ModelDelegate['findUnique']>> | null> {
         return this.model.findUnique({
             where: { id },
             include,
         });
     }
 
-    async create(data: Parameters<ModelDelegate['create']>[0]['data']): Promise<ReturnType<ModelDelegate['create']>> {
+    async create(data: Parameters<ModelDelegate['create']>[0]['data']): Promise<Awaited<ReturnType<ModelDelegate['create']>>> {
         return this.model.create({ data });
     }
 
     async update(
         id: string,
         data: Parameters<ModelDelegate['update']>[0]['data']
-    ): Promise<ReturnType<ModelDelegate['update']>> {
+    ): Promise<Awaited<ReturnType<ModelDelegate['update']>>> {
         return this.model.update({
             where: { id },
             data,
         });
     }
 
-    async delete(id: string): Promise<ReturnType<ModelDelegate['delete']>> {
+    async delete(id: string): Promise<Awaited<ReturnType<ModelDelegate['delete']>>> {
         return this.model.delete({
             where: { id },
         });
