@@ -1,0 +1,167 @@
+'use client';
+
+import { useState } from 'react';
+import { signIn } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import { GlassCard } from '@/components/layout/GlassCard';
+import { Loader2, UserPlus } from 'lucide-react';
+import { registerAction } from '@/actions/auth.actions';
+import Link from 'next/link';
+
+export default function RegisterPage() {
+    const router = useRouter();
+    const [name, setName] = useState('');
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError('');
+
+        if (password !== confirmPassword) {
+            setError('Password tidak cocok.');
+            return;
+        }
+
+        if (password.length < 6) {
+            setError('Password minimal 6 karakter.');
+            return;
+        }
+
+        setLoading(true);
+
+        try {
+            const result = await registerAction(name, email, password);
+
+            if (!result.success) {
+                setError(result.error || 'Gagal mendaftar');
+                setLoading(false);
+                return;
+            }
+
+            // Auto-login after register
+            const res = await signIn('credentials', {
+                email,
+                password,
+                redirect: false,
+            });
+
+            if (res?.error) {
+                setError('Akun berhasil dibuat, tapi login gagal. Coba login manual.');
+            } else {
+                router.push('/dashboard');
+                router.refresh();
+            }
+        } catch {
+            setError('Terjadi kesalahan sistem. Coba lagi.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="w-full max-w-sm z-10">
+            <div className="text-center mb-8">
+                <h1 className="text-3xl font-extrabold tracking-tighter text-white font-mono uppercase">
+                    DOMPET
+                </h1>
+                <p className="text-xs text-neutral-400 mt-1.5 uppercase tracking-widest font-medium">
+                    Buat Akun Baru
+                </p>
+            </div>
+
+            <GlassCard className="p-6 border border-neutral-800 bg-neutral-900/40 backdrop-blur-md rounded-xl">
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                        <label className="block text-[10px] text-neutral-400 uppercase tracking-widest font-mono mb-1.5">
+                            Nama Lengkap
+                        </label>
+                        <input
+                            type="text"
+                            required
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            placeholder="Fauzan"
+                            className="w-full bg-neutral-950/60 border border-neutral-800 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-white placeholder-neutral-600 transition-colors font-mono"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-[10px] text-neutral-400 uppercase tracking-widest font-mono mb-1.5">
+                            Alamat Email
+                        </label>
+                        <input
+                            type="email"
+                            required
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            placeholder="fauzan@dompet.app"
+                            className="w-full bg-neutral-950/60 border border-neutral-800 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-white placeholder-neutral-600 transition-colors font-mono"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-[10px] text-neutral-400 uppercase tracking-widest font-mono mb-1.5">
+                            Kata Sandi
+                        </label>
+                        <input
+                            type="password"
+                            required
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder="Minimal 6 karakter"
+                            className="w-full bg-neutral-950/60 border border-neutral-800 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-white placeholder-neutral-600 transition-colors"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-[10px] text-neutral-400 uppercase tracking-widest font-mono mb-1.5">
+                            Konfirmasi Sandi
+                        </label>
+                        <input
+                            type="password"
+                            required
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            placeholder="Ulangi password"
+                            className="w-full bg-neutral-950/60 border border-neutral-800 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-white placeholder-neutral-600 transition-colors"
+                        />
+                    </div>
+
+                    {error && (
+                        <p className="text-xs text-red-500 font-mono mt-2">
+                            {error}
+                        </p>
+                    )}
+
+                    <button
+                        type="submit"
+                        disabled={loading}
+                        className="w-full mt-2 bg-white text-black font-semibold text-xs py-3 rounded-lg hover:bg-neutral-200 transition-colors duration-150 flex items-center justify-center gap-1.5 uppercase tracking-widest font-mono"
+                    >
+                        {loading ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                            <>
+                                Buat Akun
+                                <UserPlus className="w-4 h-4" />
+                            </>
+                        )}
+                    </button>
+                </form>
+
+                <div className="mt-6 pt-5 border-t border-neutral-800/60 text-center">
+                    <p className="text-[10px] text-neutral-500 uppercase tracking-wider font-mono">
+                        Sudah punya akun?{' '}
+                        <Link href="/login" className="text-white hover:underline">
+                            Masuk di sini
+                        </Link>
+                    </p>
+                </div>
+            </GlassCard>
+        </div>
+    );
+}
