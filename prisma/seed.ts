@@ -1,13 +1,8 @@
 import 'dotenv/config';
+import { PrismaClient } from '@prisma/client';
 
 async function main() {
-  const { PrismaClient } = await import('@prisma/client');
-  const { PrismaPg } = await import('@prisma/adapter-pg');
-
-  const adapter = new PrismaPg({
-    connectionString: process.env.DATABASE_URL!,
-  });
-  const prisma = new PrismaClient({ adapter });
+  const prisma = new PrismaClient();
 
   console.log('🌱 Seeding database...');
 
