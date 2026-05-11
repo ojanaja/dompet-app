@@ -31,13 +31,17 @@ export type DashboardData = {
         budget: number;
         spent: number;
     }>;
+    spendingTrend: Array<{
+        date: string;
+        amount: number;
+    }>;
 };
 
 const CATEGORY_COLORS: Record<string, string> = {
-    ESSENTIAL: '#3b82f6',
-    LIFESTYLE: '#ec4899',
-    PROJECT: '#8b5cf6',
-    INCOME: '#10b981',
+    ESSENTIAL: '#ffffff',
+    LIFESTYLE: '#888888',
+    PROJECT: '#555555',
+    INCOME: '#cccccc',
 };
 
 export async function fetchDashboardDataAction(month?: number, year?: number) {
@@ -92,7 +96,6 @@ export async function fetchDashboardDataAction(month?: number, year?: number) {
             categoryName: t.category?.name || null,
         }));
 
-        // Calculate progress for each budget
         const budgetsInfo = budgets.map(b => {
              const spent = transactions
                  .filter(t => t.categoryId === b.categoryId && t.type === 'EXPENSE')
@@ -107,6 +110,36 @@ export async function fetchDashboardDataAction(month?: number, year?: number) {
              };
         });
 
+        // Calculate spending trend (group by day)
+        const trendMap = new Map<string, number>();
+        const daysInMonth = new Date(targetYear, targetMonth, 0).getDate();
+        
+        // Initialize all days up to current day (or end of month if past)
+        const currentDay = (now.getMonth() + 1 === targetMonth && now.getFullYear() === targetYear) 
+            ? now.getDate() 
+            : daysInMonth;
+            
+        for (let i = 1; i <= currentDay; i++) {
+            const dateStr = `${i.toString().padStart(2, '0')} ${new Date(targetYear, targetMonth - 1, i).toLocaleString('id-ID', { month: 'short' })}`;
+            trendMap.set(dateStr, 0);
+        }
+
+        transactions
+            .filter(t => t.type === 'EXPENSE')
+            .forEach(t => {
+                const day = t.date.getDate();
+                if (day <= currentDay) {
+                    const dateStr = `${day.toString().padStart(2, '0')} ${t.date.toLocaleString('id-ID', { month: 'short' })}`;
+                    const existing = trendMap.get(dateStr) || 0;
+                    trendMap.set(dateStr, existing + t.amount);
+                }
+            });
+
+        const spendingTrend = Array.from(trendMap.entries()).map(([date, amount]) => ({
+            date,
+            amount
+        }));
+
         return {
             totalExpense,
             totalIncome,
@@ -114,7 +147,8 @@ export async function fetchDashboardDataAction(month?: number, year?: number) {
             categoryBreakdown,
             recentTransactions,
             transactionCount: transactions.length,
-            budgetsInfo
+            budgetsInfo,
+            spendingTrend
         };
     });
 }

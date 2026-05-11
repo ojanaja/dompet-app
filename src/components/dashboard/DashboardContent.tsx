@@ -2,6 +2,7 @@
 
 import { GlassCard } from '@/components/layout/GlassCard';
 import { ExpenseDonutChart } from '@/components/charts/ExpenseDonutChart';
+import { SpendingTrendChart } from '@/components/charts/SpendingTrendChart';
 import { ArrowDownLeft, ArrowUpRight, Minus } from 'lucide-react';
 import { formatRupiah } from '@/lib/format';
 import type { DashboardData } from '@/actions/dashboard.actions';
@@ -96,6 +97,12 @@ export function DashboardContent({ data }: DashboardContentProps) {
                         ))}
                     </div>
                 )}
+            </GlassCard>
+
+            {/* Trend Chart */}
+            <GlassCard className="p-5">
+                <h2 className="text-xs text-muted uppercase tracking-widest font-medium mb-4">Tren Pengeluaran</h2>
+                <SpendingTrendChart data={data.spendingTrend} />
             </GlassCard>
 
             {/* Budgets */}
