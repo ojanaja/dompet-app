@@ -7,15 +7,32 @@ import type { Prisma } from '@prisma/client';
 
 export class TransactionService {
     /**
-     * Mendapatkan semua transaksi untuk user spesifik.
+     * Mendapatkan semua transaksi untuk user spesifik dengan pagination.
      */
-    static async getUserTransactions(userId: string) {
-        if (!userId) throw new Error("User ID and is required");
+    static async getUserTransactions(userId: string, take?: number, skip?: number) {
+        if (!userId) throw new Error("User ID is required");
         return transactionRepository.findAll({
             where: { userId },
             include: { category: true },
-            orderBy: { date: 'desc' }
+            orderBy: { date: 'desc' },
+            take,
+            skip
         });
+    }
+
+    /**
+     * Menghapus transaksi
+     */
+    static async deleteTransaction(transactionId: string, userId: string) {
+        if (!transactionId || !userId) throw new Error("Transaction ID and User ID are required");
+        
+        // Verifikasi kepemilikan transaksi
+        const transaction = await transactionRepository.findById(transactionId);
+        if (!transaction || transaction.userId !== userId) {
+            throw new Error("Transaction not found or unauthorized");
+        }
+
+        return transactionRepository.delete(transactionId);
     }
 
     /**

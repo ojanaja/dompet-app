@@ -1,10 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, ChevronDown, ArrowDownLeft, ArrowUpRight } from 'lucide-react';
+import { Search, ChevronDown, ArrowDownLeft, ArrowUpRight, Trash2, Loader2 } from 'lucide-react';
 import { formatRupiah, formatDate, formatTime, formatRelativeDate } from '@/lib/format';
 import { GlassCard } from '@/components/layout/GlassCard';
 import { motion, AnimatePresence } from 'framer-motion';
+import { deleteTransactionAction } from '@/actions/transaction.actions';
+import { useRouter } from 'next/navigation';
 
 interface Transaction {
     id: string;
@@ -23,14 +25,38 @@ interface Transaction {
 
 interface LogContentProps {
     transactions: Transaction[];
+    currentPage: number;
+    hasMore: boolean;
 }
 
 type FilterType = 'ALL' | 'EXPENSE' | 'INCOME';
 
-export function LogContent({ transactions }: LogContentProps) {
+export function LogContent({ transactions, currentPage, hasMore }: LogContentProps) {
+    const router = useRouter();
     const [search, setSearch] = useState('');
     const [filter, setFilter] = useState<FilterType>('ALL');
     const [expandedId, setExpandedId] = useState<string | null>(null);
+    const [isDeleting, setIsDeleting] = useState<string | null>(null);
+
+    const handleDelete = async (e: React.MouseEvent, id: string) => {
+        e.stopPropagation();
+        if (!confirm('Hapus transaksi ini?')) return;
+        
+        setIsDeleting(id);
+        try {
+            await deleteTransactionAction(id, '/log');
+            router.refresh();
+        } catch (error) {
+            console.error('Failed to delete transaction', error);
+        } finally {
+            setIsDeleting(null);
+            setExpandedId(null);
+        }
+    };
+
+    const handlePageChange = (newPage: number) => {
+        router.push(`/log?page=${newPage}`);
+    };
 
     const filtered = transactions.filter(tx => {
         const matchesSearch = search === '' ||
@@ -138,18 +164,28 @@ export function LogContent({ transactions }: LogContentProps) {
                                             transition={{ duration: 0.15 }}
                                             className="overflow-hidden"
                                         >
-                                            <div className="mt-3 pt-3 border-t border-border-subtle space-y-1.5">
-                                                {tx.notes && (
-                                                    <p className="text-xs text-muted">{tx.notes}</p>
-                                                )}
-                                                <p className="text-xs text-muted-foreground">
-                                                    {formatDate(tx.date)} · {formatTime(tx.date)}
-                                                </p>
-                                                {tx.metadata?.isDebt && (
+                                            <div className="mt-3 pt-3 border-t border-border-subtle flex justify-between items-end">
+                                                <div className="space-y-1.5">
+                                                    {tx.notes && (
+                                                        <p className="text-xs text-muted">{tx.notes}</p>
+                                                    )}
                                                     <p className="text-xs text-muted-foreground">
-                                                        Utang: {tx.metadata.debtorName}
+                                                        {formatDate(tx.date)} · {formatTime(tx.date)}
                                                     </p>
-                                                )}
+                                                    {tx.metadata?.isDebt && (
+                                                        <p className="text-xs text-muted-foreground">
+                                                            Utang: {tx.metadata.debtorName}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                                <button
+                                                    onClick={(e) => handleDelete(e, tx.id)}
+                                                    disabled={isDeleting === tx.id}
+                                                    className="p-1.5 rounded-md hover:bg-danger/10 text-danger transition-colors disabled:opacity-50"
+                                                    title="Hapus transaksi"
+                                                >
+                                                    {isDeleting === tx.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                                                </button>
                                             </div>
                                         </motion.div>
                                     )}
@@ -159,6 +195,27 @@ export function LogContent({ transactions }: LogContentProps) {
                     </GlassCard>
                 </div>
             ))}
+
+            {/* Pagination */}
+            {filtered.length > 0 && (currentPage > 1 || hasMore) && (
+                <div className="flex justify-between items-center mt-2 px-1">
+                    <button
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        disabled={currentPage === 1}
+                        className="px-3 py-1.5 bg-card border border-border text-xs text-foreground font-medium rounded-md hover:bg-card-hover transition-colors disabled:opacity-50"
+                    >
+                        Sebelumnya
+                    </button>
+                    <span className="text-xs text-muted-foreground">Hal {currentPage}</span>
+                    <button
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        disabled={!hasMore}
+                        className="px-3 py-1.5 bg-card border border-border text-xs text-foreground font-medium rounded-md hover:bg-card-hover transition-colors disabled:opacity-50"
+                    >
+                        Selanjutnya
+                    </button>
+                </div>
+            )}
 
             {/* Empty */}
             {filtered.length === 0 && (
