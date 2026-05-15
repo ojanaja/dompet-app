@@ -6,9 +6,9 @@ import { getDefaultUser } from '@/lib/user.server';
 import { revalidatePath } from 'next/cache';
 import type { Prisma } from '@prisma/client';
 
-export async function fetchUserTransactionsAction(take?: number, skip?: number) {
+export async function fetchUserTransactionsAction(take?: number, skip?: number, startDate?: Date, endDate?: Date) {
     const user = await getDefaultUser();
-    return withActionHandler(() => TransactionService.getUserTransactions(user.id, take, skip));
+    return withActionHandler(() => TransactionService.getUserTransactions(user.id, take, skip, startDate, endDate));
 }
 
 export async function deleteTransactionAction(transactionId: string, pathToRevalidate: string = '/log') {

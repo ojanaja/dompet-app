@@ -10,8 +10,14 @@ interface Category {
     type: string;
 }
 
+interface Wallet {
+    id: string;
+    name: string;
+}
+
 interface TransactionFormProps {
     categories: Category[];
+    wallets: Wallet[];
     onSuccess: () => void;
     initialData?: {
         id: string;
@@ -19,12 +25,13 @@ interface TransactionFormProps {
         amount: number;
         type: 'INCOME' | 'EXPENSE';
         categoryId: string | null;
+        walletId: string | null;
         date: Date | string;
         notes: string | null;
     };
 }
 
-export function TransactionForm({ categories, onSuccess, initialData }: TransactionFormProps) {
+export function TransactionForm({ categories, wallets, onSuccess, initialData }: TransactionFormProps) {
     const isEdit = !!initialData;
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -33,6 +40,8 @@ export function TransactionForm({ categories, onSuccess, initialData }: Transact
     const [title, setTitle] = useState(initialData?.title || '');
     const [amount, setAmount] = useState(initialData?.amount ? String(initialData.amount) : '');
     const [categoryId, setCategoryId] = useState(initialData?.categoryId || '');
+    const [walletId, setWalletId] = useState(initialData?.walletId || (wallets.length > 0 ? wallets[0].id : ''));
+    
     const defaultDate = () => {
         const d = initialData?.date ? new Date(initialData.date) : new Date();
         const yyyy = d.getFullYear();
@@ -52,7 +61,7 @@ export function TransactionForm({ categories, onSuccess, initialData }: Transact
         e.preventDefault();
         setError('');
 
-        if (!title || !amount || !categoryId || !date) {
+        if (!title || !amount || !categoryId || !date || !walletId) {
             setError('Mohon lengkapi semua field wajib.');
             return;
         }
@@ -71,6 +80,7 @@ export function TransactionForm({ categories, onSuccess, initialData }: Transact
                 amount: numAmount,
                 type,
                 categoryId,
+                walletId,
                 date: new Date(date).toISOString(),
                 notes: notes || null,
             };
@@ -155,7 +165,7 @@ export function TransactionForm({ categories, onSuccess, initialData }: Transact
                 />
             </div>
 
-            {/* Kategori & Tanggal */}
+            {/* Kategori & Dompet */}
             <div className="grid grid-cols-2 gap-3">
                 <div>
                     <label className="block text-[10px] text-muted-foreground uppercase tracking-widest font-mono mb-1.5">
@@ -167,7 +177,7 @@ export function TransactionForm({ categories, onSuccess, initialData }: Transact
                         onChange={(e) => setCategoryId(e.target.value)}
                         className="w-full bg-card border border-border rounded-lg px-3 py-2.5 text-sm text-foreground focus:outline-none focus:border-foreground transition-colors appearance-none"
                     >
-                        <option value="" disabled>Pilih</option>
+                        <option value="" disabled>Pilih Kategori</option>
                         {filteredCategories.map(cat => (
                             <option key={cat.id} value={cat.id}>{cat.name}</option>
                         ))}
@@ -175,16 +185,34 @@ export function TransactionForm({ categories, onSuccess, initialData }: Transact
                 </div>
                 <div>
                     <label className="block text-[10px] text-muted-foreground uppercase tracking-widest font-mono mb-1.5">
-                        Tanggal *
+                        Dompet *
                     </label>
-                    <input
-                        type="date"
+                    <select
                         required
-                        value={date}
-                        onChange={(e) => setDate(e.target.value)}
-                        className="w-full bg-card border border-border rounded-lg px-3 py-2.5 text-sm text-foreground focus:outline-none focus:border-foreground transition-colors [color-scheme:dark]"
-                    />
+                        value={walletId}
+                        onChange={(e) => setWalletId(e.target.value)}
+                        className="w-full bg-card border border-border rounded-lg px-3 py-2.5 text-sm text-foreground focus:outline-none focus:border-foreground transition-colors appearance-none"
+                    >
+                        <option value="" disabled>Pilih Dompet</option>
+                        {wallets.map(w => (
+                            <option key={w.id} value={w.id}>{w.name}</option>
+                        ))}
+                    </select>
                 </div>
+            </div>
+
+            {/* Tanggal */}
+            <div>
+                <label className="block text-[10px] text-muted-foreground uppercase tracking-widest font-mono mb-1.5">
+                    Tanggal *
+                </label>
+                <input
+                    type="date"
+                    required
+                    value={date}
+                    onChange={(e) => setDate(e.target.value)}
+                    className="w-full bg-card border border-border rounded-lg px-3 py-2.5 text-sm text-foreground focus:outline-none focus:border-foreground transition-colors [color-scheme:dark]"
+                />
             </div>
 
             {/* Catatan */}

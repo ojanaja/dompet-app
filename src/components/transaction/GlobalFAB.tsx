@@ -5,17 +5,21 @@ import { Plus } from 'lucide-react';
 import { BottomSheet } from '@/components/ui/BottomSheet';
 import { TransactionForm } from '@/components/transaction/TransactionForm';
 import { fetchCategoriesAction } from '@/actions/core.actions';
+import { fetchUserWalletsAction } from '@/actions/wallet.actions';
 
 export function GlobalFAB() {
     const [isOpen, setIsOpen] = useState(false);
     const [categories, setCategories] = useState<any[]>([]);
+    const [wallets, setWallets] = useState<any[]>([]);
 
     useEffect(() => {
         if (isOpen && categories.length === 0) {
-            fetchCategoriesAction().then(res => {
-                if (res.success && res.data) {
-                    setCategories(res.data);
-                }
+            Promise.all([
+                fetchCategoriesAction(),
+                fetchUserWalletsAction()
+            ]).then(([catRes, walRes]) => {
+                if (catRes.success && catRes.data) setCategories(catRes.data);
+                if (walRes.success && walRes.data) setWallets(walRes.data);
             });
         }
     }, [isOpen, categories.length]);
@@ -37,6 +41,7 @@ export function GlobalFAB() {
             >
                 <TransactionForm
                     categories={categories}
+                    wallets={wallets}
                     onSuccess={() => setIsOpen(false)}
                 />
             </BottomSheet>

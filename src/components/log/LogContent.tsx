@@ -1,13 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, ChevronDown, ArrowDownLeft, ArrowUpRight, Trash2, Loader2, Edit2 } from 'lucide-react';
+import { Search, ChevronDown, ArrowDownLeft, ArrowUpRight, Trash2, Loader2, Edit2, Download } from 'lucide-react';
 import { formatRupiah, formatDate, formatTime, formatRelativeDate } from '@/lib/format';
 import { GlassCard } from '@/components/layout/GlassCard';
 import { motion, AnimatePresence } from 'framer-motion';
 import { deleteTransactionAction } from '@/actions/transaction.actions';
 import { fetchCategoriesAction } from '@/actions/core.actions';
-import { useRouter } from 'next/navigation';
+import { fetchUserWalletsAction } from '@/actions/wallet.actions';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { BottomSheet } from '@/components/ui/BottomSheet';
 import { TransactionForm } from '@/components/transaction/TransactionForm';
 
@@ -24,6 +25,10 @@ interface Transaction {
         name: string;
         type: string;
     } | null;
+    wallet: {
+        id: string;
+        name: string;
+    } | null;
 }
 
 interface LogContentProps {
@@ -36,22 +41,43 @@ type FilterType = 'ALL' | 'EXPENSE' | 'INCOME';
 
 export function LogContent({ transactions, currentPage, hasMore }: LogContentProps) {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const pathname = usePathname();
+
     const [search, setSearch] = useState('');
     const [filter, setFilter] = useState<FilterType>('ALL');
     const [expandedId, setExpandedId] = useState<string | null>(null);
     const [isDeleting, setIsDeleting] = useState<string | null>(null);
     const [editTx, setEditTx] = useState<Transaction | null>(null);
     const [categories, setCategories] = useState<any[]>([]);
+    const [wallets, setWallets] = useState<any[]>([]);
+
+    const [startDate, setStartDate] = useState(searchParams.get('start') || '');
+    const [endDate, setEndDate] = useState(searchParams.get('end') || '');
 
     useEffect(() => {
         if (editTx && categories.length === 0) {
-            fetchCategoriesAction().then(res => {
-                if (res.success && res.data) {
-                    setCategories(res.data);
-                }
+            Promise.all([
+                fetchCategoriesAction(),
+                fetchUserWalletsAction()
+            ]).then(([catRes, walRes]) => {
+                if (catRes.success && catRes.data) setCategories(catRes.data);
+                if (walRes.success && walRes.data) setWallets(walRes.data);
             });
         }
     }, [editTx, categories.length]);
+
+    const handleDateChange = () => {
+        const params = new URLSearchParams(searchParams);
+        if (startDate) params.set('start', startDate);
+        else params.delete('start');
+        
+        if (endDate) params.set('end', endDate);
+        else params.delete('end');
+        
+        params.set('page', '1'); // Reset pagination
+        router.push(`${pathname}?${params.toString()}`);
+    };
 
     const handleDelete = async (e: React.MouseEvent, id: string) => {
         e.stopPropagation();
@@ -70,7 +96,35 @@ export function LogContent({ transactions, currentPage, hasMore }: LogContentPro
     };
 
     const handlePageChange = (newPage: number) => {
-        router.push(`/log?page=${newPage}`);
+        const params = new URLSearchParams(searchParams);
+        params.set('page', newPage.toString());
+        router.push(`${pathname}?${params.toString()}`);
+    };
+
+    const exportToCSV = () => {
+        const headers = ['Tanggal', 'Waktu', 'Tipe', 'Kategori', 'Dompet', 'Judul', 'Nominal', 'Catatan'];
+        const rows = transactions.map(tx => [
+            formatDate(tx.date).replace(/,/g, ''), // remove comma
+            formatTime(tx.date),
+            tx.type === 'INCOME' ? 'Pemasukan' : 'Pengeluaran',
+            tx.category?.name || 'Lainnya',
+            tx.wallet?.name || 'Lainnya',
+            `"${tx.title}"`,
+            tx.amount,
+            `"${tx.notes || ''}"`
+        ]);
+
+        const csvContent = "data:text/csv;charset=utf-8," 
+            + headers.join(",") + "\n" 
+            + rows.map(e => e.join(",")).join("\n");
+
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `dompet_log_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     };
 
     const filtered = transactions.filter(tx => {
@@ -92,29 +146,59 @@ export function LogContent({ transactions, currentPage, hasMore }: LogContentPro
 
     return (
         <div className="flex flex-col gap-3 p-4 max-w-lg mx-auto">
-            {/* Search & Filter */}
-            <div className="flex gap-2">
-                <div className="flex-1 relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-                    <input
-                        type="text"
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        placeholder="Cari transaksi..."
-                        className="w-full bg-card border border-border rounded-lg pl-9 pr-4 py-2.5 text-sm text-foreground focus:outline-none focus:border-muted placeholder-muted-foreground transition-colors"
-                    />
+            {/* Search, Filter & Date Pickers */}
+            <div className="flex flex-col gap-2">
+                <div className="flex gap-2">
+                    <div className="flex-1 relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                        <input
+                            type="text"
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            placeholder="Cari transaksi..."
+                            className="w-full bg-card border border-border rounded-lg pl-9 pr-4 py-2.5 text-sm text-foreground focus:outline-none focus:border-muted placeholder-muted-foreground transition-colors"
+                        />
+                    </div>
+                    <div className="relative">
+                        <select
+                            value={filter}
+                            onChange={(e) => setFilter(e.target.value as FilterType)}
+                            className="appearance-none bg-card border border-border rounded-lg px-3 pr-7 py-2.5 text-sm text-foreground focus:outline-none focus:border-muted cursor-pointer transition-colors"
+                        >
+                            <option value="ALL">Semua</option>
+                            <option value="EXPENSE">Keluar</option>
+                            <option value="INCOME">Masuk</option>
+                        </select>
+                        <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground pointer-events-none" />
+                    </div>
                 </div>
-                <div className="relative">
-                    <select
-                        value={filter}
-                        onChange={(e) => setFilter(e.target.value as FilterType)}
-                        className="appearance-none bg-card border border-border rounded-lg px-3 pr-7 py-2.5 text-sm text-foreground focus:outline-none focus:border-muted cursor-pointer transition-colors"
+
+                {/* Date Filters & Export */}
+                <div className="flex items-center justify-between gap-2 bg-card p-2 rounded-lg border border-border">
+                    <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                        <input 
+                            type="date" 
+                            value={startDate}
+                            onChange={(e) => setStartDate(e.target.value)}
+                            onBlur={handleDateChange}
+                            className="w-full bg-transparent text-xs text-foreground focus:outline-none [color-scheme:dark]"
+                        />
+                        <span className="text-muted-foreground text-xs">-</span>
+                        <input 
+                            type="date" 
+                            value={endDate}
+                            onChange={(e) => setEndDate(e.target.value)}
+                            onBlur={handleDateChange}
+                            className="w-full bg-transparent text-xs text-foreground focus:outline-none [color-scheme:dark]"
+                        />
+                    </div>
+                    <button 
+                        onClick={exportToCSV}
+                        className="flex-shrink-0 flex items-center gap-1.5 bg-foreground text-background px-3 py-1.5 rounded-md text-xs font-medium hover:bg-neutral-200 transition-colors"
                     >
-                        <option value="ALL">Semua</option>
-                        <option value="EXPENSE">Keluar</option>
-                        <option value="INCOME">Masuk</option>
-                    </select>
-                    <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground pointer-events-none" />
+                        <Download className="w-3 h-3" />
+                        CSV
+                    </button>
                 </div>
             </div>
 
@@ -184,8 +268,13 @@ export function LogContent({ transactions, currentPage, hasMore }: LogContentPro
                                                     {tx.notes && (
                                                         <p className="text-xs text-muted">{tx.notes}</p>
                                                     )}
-                                                    <p className="text-xs text-muted-foreground">
-                                                        {formatDate(tx.date)} · {formatTime(tx.date)}
+                                                    <p className="text-xs text-muted-foreground flex items-center gap-2">
+                                                        <span>{formatDate(tx.date)} · {formatTime(tx.date)}</span>
+                                                        {tx.wallet && (
+                                                            <span className="bg-border-subtle px-1.5 py-0.5 rounded text-[10px]">
+                                                                {tx.wallet.name}
+                                                            </span>
+                                                        )}
                                                     </p>
                                                     {tx.metadata?.isDebt && (
                                                         <p className="text-xs text-muted-foreground">
@@ -265,12 +354,14 @@ export function LogContent({ transactions, currentPage, hasMore }: LogContentPro
                 {editTx && (
                     <TransactionForm
                         categories={categories}
+                        wallets={wallets}
                         initialData={{
                             id: editTx.id,
                             title: editTx.title,
                             amount: editTx.amount,
                             type: editTx.type as any,
                             categoryId: editTx.category?.id || null,
+                            walletId: editTx.wallet?.id || null,
                             date: editTx.date,
                             notes: editTx.notes,
                         }}

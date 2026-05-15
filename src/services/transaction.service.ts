@@ -2,6 +2,8 @@ import { transactionRepository } from '@/repositories/transaction.repository';
 import { categoryRepository } from '@/repositories/category.repository';
 import { budgetRepository } from '@/repositories/budget.repository';
 import { debtRepository } from '@/repositories/debt.repository';
+import { walletRepository } from '@/repositories/wallet.repository';
+import { WalletService } from './wallet.service';
 import { AIService } from './ai.service';
 import type { Prisma } from '@prisma/client';
 
@@ -9,11 +11,20 @@ export class TransactionService {
     /**
      * Mendapatkan semua transaksi untuk user spesifik dengan pagination.
      */
-    static async getUserTransactions(userId: string, take?: number, skip?: number) {
+    static async getUserTransactions(userId: string, take?: number, skip?: number, startDate?: Date, endDate?: Date) {
         if (!userId) throw new Error("User ID is required");
+        
+        const where: any = { userId };
+        
+        if (startDate || endDate) {
+            where.date = {};
+            if (startDate) where.date.gte = startDate;
+            if (endDate) where.date.lte = endDate;
+        }
+
         return transactionRepository.findAll({
-            where: { userId },
-            include: { category: true },
+            where,
+            include: { category: true, wallet: true },
             orderBy: { date: 'desc' },
             take,
             skip
@@ -30,6 +41,12 @@ export class TransactionService {
         const transaction = await transactionRepository.findById(transactionId);
         if (!transaction || transaction.userId !== userId) {
             throw new Error("Transaction not found or unauthorized");
+        }
+
+        // Revert wallet balance
+        if (transaction.walletId) {
+            const revertType = transaction.type === 'INCOME' ? 'EXPENSE' : 'INCOME';
+            await walletRepository.updateBalance(transaction.walletId, transaction.amount, revertType);
         }
 
         return transactionRepository.delete(transactionId);
@@ -69,11 +86,24 @@ export class TransactionService {
             }
         }
 
+        // 1.5 Handle Wallet
+        let walletId = data.walletId;
+        if (!walletId) {
+            const defaultWallet = await WalletService.createDefaultWalletIfNone(data.userId);
+            walletId = defaultWallet.id;
+        }
+
         // 2. Simpan transaksi
         const transaction = await transactionRepository.create({
             ...data,
-            categoryId
+            categoryId,
+            walletId
         });
+
+        // 2.5 Update Wallet Balance
+        if (walletId) {
+            await walletRepository.updateBalance(walletId, transaction.amount, transaction.type);
+        }
 
         // 3. Logika Debt Tracker (Day 6)
         if (metadata?.isDebt) {
@@ -91,7 +121,7 @@ export class TransactionService {
             ? `Oke, utang si ${metadata.debtorName || "Orang Random"} udah gue catet. Inget ya, nagihnya jangan galakan yang ngutang.`
             : "Transaksi berhasil dicatat.";
 
-        if (transaction.type === 'EXPENSE' && !metadata?.isDebt) {
+        if (transaction.type === 'EXPENSE' && !metadata?.isDebt && categoryId) {
             const now = new Date();
             const budgets = await budgetRepository.findUserBudgets(
                 transaction.userId,
@@ -145,6 +175,19 @@ export class TransactionService {
             throw new Error("Transaction not found or unauthorized");
         }
 
-        return transactionRepository.update(transactionId, data);
+        // Revert old wallet balance
+        if (transaction.walletId) {
+            const revertType = transaction.type === 'INCOME' ? 'EXPENSE' : 'INCOME';
+            await walletRepository.updateBalance(transaction.walletId, transaction.amount, revertType);
+        }
+
+        const updatedTransaction = await transactionRepository.update(transactionId, data);
+
+        // Apply new wallet balance
+        if (updatedTransaction.walletId) {
+            await walletRepository.updateBalance(updatedTransaction.walletId, updatedTransaction.amount, updatedTransaction.type);
+        }
+
+        return updatedTransaction;
     }
 }
