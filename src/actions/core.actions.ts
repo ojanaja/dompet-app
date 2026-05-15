@@ -20,6 +20,22 @@ export async function createCategoryAction(data: Prisma.CategoryCreateInput, pat
   });
 }
 
+export async function updateCategoryAction(id: string, data: Prisma.CategoryUpdateInput, pathToRevalidate: string = '/') {
+  return withActionHandler(async () => {
+    const result = await CategoryService.updateCategory(id, data);
+    revalidatePath(pathToRevalidate);
+    return result;
+  });
+}
+
+export async function deleteCategoryAction(id: string, pathToRevalidate: string = '/') {
+  return withActionHandler(async () => {
+    const result = await CategoryService.deleteCategory(id);
+    revalidatePath(pathToRevalidate);
+    return result;
+  });
+}
+
 export async function fetchUserBudgetsAction(month: number, year: number) {
   const user = await getDefaultUser();
   return withActionHandler(() => BudgetService.getUserBudgets(user.id, month, year));

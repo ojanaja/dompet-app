@@ -34,3 +34,13 @@ export async function createTransactionAction(data: Omit<Prisma.TransactionUnche
         return result; // result sekarang mengandung { transaction, aiFeedback }
     });
 }
+
+export async function updateTransactionAction(transactionId: string, data: Omit<Prisma.TransactionUpdateInput, 'userId'>, pathToRevalidate: string = '/log') {
+    const user = await getDefaultUser();
+    return withActionHandler(async () => {
+        const result = await TransactionService.updateTransaction(transactionId, user.id, data);
+        revalidatePath(pathToRevalidate);
+        revalidatePath('/dashboard');
+        return result;
+    });
+}

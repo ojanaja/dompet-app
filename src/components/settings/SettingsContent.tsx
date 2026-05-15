@@ -8,6 +8,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { NotificationSettings } from './NotificationSettings';
 import { BudgetSettings } from './BudgetSettings';
+import { CategorySettings } from './CategorySettings';
 
 interface SettingsContentProps {
     user: { id: string; name: string | null; email: string };
@@ -73,19 +74,7 @@ export function SettingsContent({ user, categories, debts, budgets }: SettingsCo
                     <Tag className="w-3.5 h-3.5 text-muted" />
                     <h2 className="text-xs text-muted uppercase tracking-widest font-medium">Kategori</h2>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                    {categories.map(cat => (
-                        <span
-                            key={cat.id}
-                            className="text-xs px-2.5 py-1 rounded-md border border-border text-muted bg-card"
-                        >
-                            {cat.name}
-                        </span>
-                    ))}
-                    {categories.length === 0 && (
-                        <p className="text-xs text-muted-foreground">Belum ada kategori</p>
-                    )}
-                </div>
+                <CategorySettings initialCategories={categories} />
             </GlassCard>
 
             {/* Debts */}

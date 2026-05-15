@@ -1,12 +1,15 @@
 'use client';
 
-import { useState } from 'react';
-import { Search, ChevronDown, ArrowDownLeft, ArrowUpRight, Trash2, Loader2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Search, ChevronDown, ArrowDownLeft, ArrowUpRight, Trash2, Loader2, Edit2 } from 'lucide-react';
 import { formatRupiah, formatDate, formatTime, formatRelativeDate } from '@/lib/format';
 import { GlassCard } from '@/components/layout/GlassCard';
 import { motion, AnimatePresence } from 'framer-motion';
 import { deleteTransactionAction } from '@/actions/transaction.actions';
+import { fetchCategoriesAction } from '@/actions/core.actions';
 import { useRouter } from 'next/navigation';
+import { BottomSheet } from '@/components/ui/BottomSheet';
+import { TransactionForm } from '@/components/transaction/TransactionForm';
 
 interface Transaction {
     id: string;
@@ -37,6 +40,18 @@ export function LogContent({ transactions, currentPage, hasMore }: LogContentPro
     const [filter, setFilter] = useState<FilterType>('ALL');
     const [expandedId, setExpandedId] = useState<string | null>(null);
     const [isDeleting, setIsDeleting] = useState<string | null>(null);
+    const [editTx, setEditTx] = useState<Transaction | null>(null);
+    const [categories, setCategories] = useState<any[]>([]);
+
+    useEffect(() => {
+        if (editTx && categories.length === 0) {
+            fetchCategoriesAction().then(res => {
+                if (res.success && res.data) {
+                    setCategories(res.data);
+                }
+            });
+        }
+    }, [editTx, categories.length]);
 
     const handleDelete = async (e: React.MouseEvent, id: string) => {
         e.stopPropagation();
@@ -178,14 +193,26 @@ export function LogContent({ transactions, currentPage, hasMore }: LogContentPro
                                                         </p>
                                                     )}
                                                 </div>
-                                                <button
-                                                    onClick={(e) => handleDelete(e, tx.id)}
-                                                    disabled={isDeleting === tx.id}
-                                                    className="p-1.5 rounded-md hover:bg-danger/10 text-danger transition-colors disabled:opacity-50"
-                                                    title="Hapus transaksi"
-                                                >
-                                                    {isDeleting === tx.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
-                                                </button>
+                                                <div className="flex items-center gap-2">
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setEditTx(tx as any);
+                                                        }}
+                                                        className="p-1.5 rounded-md hover:bg-card-hover text-muted-foreground transition-colors"
+                                                        title="Edit transaksi"
+                                                    >
+                                                        <Edit2 className="w-4 h-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={(e) => handleDelete(e, tx.id)}
+                                                        disabled={isDeleting === tx.id}
+                                                        className="p-1.5 rounded-md hover:bg-danger/10 text-danger transition-colors disabled:opacity-50"
+                                                        title="Hapus transaksi"
+                                                    >
+                                                        {isDeleting === tx.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                                                    </button>
+                                                </div>
                                             </div>
                                         </motion.div>
                                     )}
@@ -228,6 +255,32 @@ export function LogContent({ transactions, currentPage, hasMore }: LogContentPro
                     </p>
                 </GlassCard>
             )}
+
+            {/* Edit Bottom Sheet */}
+            <BottomSheet
+                isOpen={!!editTx}
+                onClose={() => setEditTx(null)}
+                title="Edit Transaksi"
+            >
+                {editTx && (
+                    <TransactionForm
+                        categories={categories}
+                        initialData={{
+                            id: editTx.id,
+                            title: editTx.title,
+                            amount: editTx.amount,
+                            type: editTx.type as any,
+                            categoryId: editTx.category?.id || null,
+                            date: editTx.date,
+                            notes: editTx.notes,
+                        }}
+                        onSuccess={() => {
+                            setEditTx(null);
+                            router.refresh();
+                        }}
+                    />
+                )}
+            </BottomSheet>
         </div>
     );
 }

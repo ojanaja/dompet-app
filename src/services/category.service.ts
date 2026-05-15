@@ -13,4 +13,12 @@ export class CategoryService {
   static async createCategory(data: Prisma.CategoryCreateInput) {
     return categoryRepository.create(data);
   }
+
+  static async updateCategory(id: string, data: Prisma.CategoryUpdateInput) {
+    return categoryRepository.update(id, data);
+  }
+
+  static async deleteCategory(id: string) {
+    return categoryRepository.delete(id);
+  }
 }

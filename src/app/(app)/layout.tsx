@@ -4,6 +4,7 @@ import "../globals.css";
 import { Header } from "@/components/layout/Header";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { AuthProvider } from "@/components/providers/AuthProvider";
+import { GlobalFAB } from "@/components/transaction/GlobalFAB";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
@@ -43,6 +44,7 @@ export default function AppLayout({
             <main className="flex-1 overflow-x-hidden overflow-y-auto pt-[56px] pb-[72px]">
               {children}
             </main>
+            <GlobalFAB />
             <BottomNav />
           </div>
         </AuthProvider>

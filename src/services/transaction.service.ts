@@ -134,4 +134,17 @@ export class TransactionService {
             aiFeedback
         };
     }
+    /**
+     * Memperbarui transaksi manual
+     */
+    static async updateTransaction(transactionId: string, userId: string, data: Prisma.TransactionUpdateInput) {
+        if (!transactionId || !userId) throw new Error("Transaction ID and User ID are required");
+
+        const transaction = await transactionRepository.findById(transactionId);
+        if (!transaction || transaction.userId !== userId) {
+            throw new Error("Transaction not found or unauthorized");
+        }
+
+        return transactionRepository.update(transactionId, data);
+    }
 }
