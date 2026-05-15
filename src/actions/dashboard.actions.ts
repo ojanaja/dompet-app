@@ -2,6 +2,7 @@
 
 import { transactionRepository } from '@/repositories/transaction.repository';
 import { budgetRepository } from '@/repositories/budget.repository';
+import { walletRepository } from '@/repositories/wallet.repository';
 import { getDefaultUser } from '@/lib/user.server';
 import { withActionHandler } from '@/lib/action-handler';
 
@@ -35,6 +36,11 @@ export type DashboardData = {
         date: string;
         amount: number;
     }>;
+    wallets: Array<{
+        id: string;
+        name: string;
+        balance: number;
+    }>;
 };
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -54,9 +60,10 @@ export async function fetchDashboardDataAction(month?: number, year?: number) {
         const startOfMonth = new Date(targetYear, targetMonth - 1, 1);
         const endOfMonth = new Date(targetYear, targetMonth, 0, 23, 59, 59);
 
-        const [transactions, budgets] = await Promise.all([
+        const [transactions, budgets, wallets] = await Promise.all([
             transactionRepository.findByDateRange(user.id, startOfMonth, endOfMonth),
-            budgetRepository.findUserBudgets(user.id, targetMonth, targetYear)
+            budgetRepository.findUserBudgets(user.id, targetMonth, targetYear),
+            walletRepository.findUserWallets(user.id)
         ]);
 
         const totalExpense = transactions
@@ -148,7 +155,8 @@ export async function fetchDashboardDataAction(month?: number, year?: number) {
             recentTransactions,
             transactionCount: transactions.length,
             budgetsInfo,
-            spendingTrend
+            spendingTrend,
+            wallets
         };
     });
 }

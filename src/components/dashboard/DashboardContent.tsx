@@ -77,13 +77,25 @@ export function DashboardContent({ data, currentMonth, currentYear }: DashboardC
 
             {/* Balance */}
             <GlassCard className="p-5">
-                <p className="text-xs text-muted mb-1">Saldo</p>
+                <p className="text-xs text-muted mb-1">Saldo Keseluruhan</p>
                 <p className={`text-3xl font-semibold tabular-nums tracking-tight ${
                     data.balance >= 0 ? 'text-foreground' : 'text-danger'
                 }`}>
                     {data.balance >= 0 ? '+' : ''}{formatRupiah(data.balance)}
                 </p>
-                <p className="text-xs text-muted-foreground mt-1">{data.transactionCount} transaksi</p>
+                <p className="text-xs text-muted-foreground mt-1">{data.transactionCount} transaksi bulan ini</p>
+                
+                {/* Wallets breakdown */}
+                {data.wallets && data.wallets.length > 0 && (
+                    <div className="mt-4 pt-4 border-t border-border-subtle grid grid-cols-2 gap-3">
+                        {data.wallets.map(w => (
+                            <div key={w.id}>
+                                <p className="text-[10px] text-muted-foreground uppercase tracking-widest">{w.name}</p>
+                                <p className="text-sm font-medium mt-0.5">{formatRupiah(w.balance)}</p>
+                            </div>
+                        ))}
+                    </div>
+                )}
             </GlassCard>
 
             {/* Income / Expense Row */}
