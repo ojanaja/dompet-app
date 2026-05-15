@@ -9,6 +9,8 @@ import { useRouter } from 'next/navigation';
 import { NotificationSettings } from './NotificationSettings';
 import { BudgetSettings } from './BudgetSettings';
 import { CategorySettings } from './CategorySettings';
+import { WalletSettings } from './WalletSettings';
+import { RecurringSettings } from './RecurringSettings';
 
 interface SettingsContentProps {
     user: { id: string; name: string | null; email: string };
@@ -75,6 +77,16 @@ export function SettingsContent({ user, categories, debts, budgets }: SettingsCo
                     <h2 className="text-xs text-muted uppercase tracking-widest font-medium">Kategori</h2>
                 </div>
                 <CategorySettings initialCategories={categories} />
+            </GlassCard>
+
+            {/* Wallets */}
+            <GlassCard className="p-5">
+                <WalletSettings />
+            </GlassCard>
+
+            {/* Recurring Transactions */}
+            <GlassCard className="p-5">
+                <RecurringSettings />
             </GlassCard>
 
             {/* Debts */}

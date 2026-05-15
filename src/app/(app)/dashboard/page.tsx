@@ -3,10 +3,11 @@ import { DashboardContent } from '@/components/dashboard/DashboardContent';
 import { fetchDashboardDataAction } from '@/actions/dashboard.actions';
 
 interface DashboardPageProps {
-  searchParams: { month?: string; year?: string };
+  searchParams: Promise<{ month?: string; year?: string }>;
 }
 
-export default async function DashboardPage({ searchParams }: DashboardPageProps) {
+export default async function DashboardPage(props: DashboardPageProps) {
+  const searchParams = await props.searchParams;
   const month = searchParams.month ? parseInt(searchParams.month) : undefined;
   const year = searchParams.year ? parseInt(searchParams.year) : undefined;
   
