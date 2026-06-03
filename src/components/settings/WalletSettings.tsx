@@ -6,51 +6,69 @@ import { Plus, Edit2, Trash2, Loader2, Wallet as WalletIcon } from 'lucide-react
 import { BottomSheet } from '@/components/ui/BottomSheet';
 import { fetchUserWalletsAction, createWalletAction, updateWalletAction, deleteWalletAction } from '@/actions/wallet.actions';
 import { formatRupiah } from '@/lib/format';
+import type { Wallet } from '@prisma/client';
 
 export function WalletSettings() {
-    const [wallets, setWallets] = useState<any[]>([]);
+    const [wallets, setWallets] = useState<Wallet[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isFormOpen, setIsFormOpen] = useState(false);
-    const [editingWallet, setEditingWallet] = useState<any>(null);
+    const [editingWallet, setEditingWallet] = useState<Wallet | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     // Form states
     const [name, setName] = useState('');
+    const [balance, setBalance] = useState('');
+
+    const fetchWallets = async () => {
+        const res = await fetchUserWalletsAction();
+        return res.success && res.data ? res.data : [];
+    };
 
     const loadWallets = async () => {
         setIsLoading(true);
-        const res = await fetchUserWalletsAction();
-        if (res.success && res.data) {
-            setWallets(res.data);
-        }
+        const nextWallets = await fetchWallets();
+        setWallets(nextWallets);
         setIsLoading(false);
     };
 
     useEffect(() => {
-        loadWallets();
+        let isMounted = true;
+
+        fetchWallets().then((nextWallets) => {
+            if (!isMounted) return;
+            setWallets(nextWallets);
+            setIsLoading(false);
+        });
+
+        return () => {
+            isMounted = false;
+        };
     }, []);
 
     const handleOpenCreate = () => {
         setEditingWallet(null);
         setName('');
+        setBalance('');
         setIsFormOpen(true);
     };
 
-    const handleOpenEdit = (w: any) => {
+    const handleOpenEdit = (w: Wallet) => {
         setEditingWallet(w);
         setName(w.name);
+        setBalance(w.balance.toLocaleString('id-ID'));
         setIsFormOpen(true);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        const parsedBalance = parseInt(balance.replace(/\D/g, ''), 10) || 0;
         setIsSubmitting(true);
 
         try {
             if (editingWallet) {
-                await updateWalletAction(editingWallet.id, { name });
+                await updateWalletAction(editingWallet.id, { name, balance: parsedBalance });
             } else {
-                await createWalletAction({ name, balance: 0 });
+                await createWalletAction({ name, balance: parsedBalance });
             }
             setIsFormOpen(false);
             loadWallets();
@@ -59,6 +77,11 @@ export function WalletSettings() {
         } finally {
             setIsSubmitting(false);
         }
+    };
+
+    const handleBalanceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value.replace(/\D/g, '');
+        setBalance(value ? Number(value).toLocaleString('id-ID') : '');
     };
 
     const handleDelete = async (id: string) => {
@@ -144,6 +167,25 @@ export function WalletSettings() {
                             placeholder="Contoh: BCA, GoPay, Tunai"
                             className="w-full bg-card border border-border rounded-lg px-3 py-2.5 text-sm text-foreground focus:outline-none focus:border-foreground transition-colors"
                         />
+                    </div>
+                    <div>
+                        <label className="block text-[10px] text-muted-foreground uppercase tracking-widest font-mono mb-1.5">
+                            Saldo *
+                        </label>
+                        <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+                                Rp
+                            </span>
+                            <input
+                                type="text"
+                                inputMode="numeric"
+                                required
+                                value={balance}
+                                onChange={handleBalanceChange}
+                                placeholder="0"
+                                className="w-full bg-card border border-border rounded-lg pl-9 pr-3 py-2.5 text-sm text-foreground focus:outline-none focus:border-foreground transition-colors"
+                            />
+                        </div>
                     </div>
                     
                     <button

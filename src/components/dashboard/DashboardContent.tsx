@@ -4,7 +4,7 @@ import { GlassCard } from '@/components/layout/GlassCard';
 import { ExpenseDonutChart } from '@/components/charts/ExpenseDonutChart';
 import { SpendingTrendChart } from '@/components/charts/SpendingTrendChart';
 import { useRouter } from 'next/navigation';
-import { ArrowDownLeft, ArrowUpRight, Minus, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowDownLeft, ArrowUpRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import { formatRupiah } from '@/lib/format';
 import type { DashboardData } from '@/actions/dashboard.actions';
 
@@ -79,9 +79,9 @@ export function DashboardContent({ data, currentMonth, currentYear }: DashboardC
             <GlassCard className="p-5">
                 <p className="text-xs text-muted mb-1">Saldo Keseluruhan</p>
                 <p className={`text-3xl font-semibold tabular-nums tracking-tight ${
-                    data.balance >= 0 ? 'text-foreground' : 'text-danger'
+                    data.totalBalance >= 0 ? 'text-foreground' : 'text-danger'
                 }`}>
-                    {data.balance >= 0 ? '+' : ''}{formatRupiah(data.balance)}
+                    {data.totalBalance >= 0 ? '+' : ''}{formatRupiah(data.totalBalance)}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">{data.transactionCount} transaksi bulan ini</p>
                 

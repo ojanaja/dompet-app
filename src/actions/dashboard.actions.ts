@@ -11,7 +11,7 @@ import { CACHE_TAGS, CACHE_TTL } from '@/lib/cache';
 export type DashboardData = {
     totalExpense: number;
     totalIncome: number;
-    balance: number;
+    totalBalance: number;
     categoryBreakdown: Array<{
         name: string;
         type: string;
@@ -77,6 +77,8 @@ export async function fetchDashboardDataAction(month?: number, year?: number) {
             const totalIncome = transactions
                 .filter(t => t.type === 'INCOME')
                 .reduce((sum, t) => sum + t.amount, 0);
+            
+            const totalBalance = wallets.reduce((sum, wallet) => sum + wallet.balance, 0);
 
             // Group expenses by category type
             const categoryMap = new Map<string, { name: string; type: string; total: number }>();
@@ -154,7 +156,7 @@ export async function fetchDashboardDataAction(month?: number, year?: number) {
             return {
                 totalExpense,
                 totalIncome,
-                balance: totalIncome - totalExpense,
+                totalBalance,
                 categoryBreakdown,
                 recentTransactions,
                 transactionCount: transactions.length,

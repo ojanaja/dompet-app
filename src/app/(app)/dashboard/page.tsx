@@ -1,4 +1,3 @@
-import { GlassCard } from '@/components/layout/GlassCard';
 import { DashboardContent } from '@/components/dashboard/DashboardContent';
 import { fetchDashboardDataAction } from '@/actions/dashboard.actions';
 
