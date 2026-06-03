@@ -10,3 +10,10 @@ This version has breaking changes — APIs, conventions, and file structure may 
 2. Sebelum men-generate kode baru, agent WAJIB melakukan `grep_search` atau `file_search` untuk memastikan apakah kode untuk fungsionalitas tersebut sudah pernah dibuat sebelumnya.
 3. Selalu manfaatkan (reuse) implementasi Repository, Service, atau Utility class yang telah tersedia.
 <!-- END:dry-architecture-rules -->
+
+<!-- BEGIN:dompet-docs-rules -->
+# Dompet Product Docs
+Sebelum mengeksekusi task produk atau kode, agent WAJIB membaca `docs/AI_READ_FIRST.md`.
+Gunakan `FEATURE_LIST.md` hanya sebagai audit/inventory fitur.
+Gunakan `PRODUCT_TASK_LIST.md` sebagai satu-satunya backlog/task list resmi.
+<!-- END:dompet-docs-rules -->

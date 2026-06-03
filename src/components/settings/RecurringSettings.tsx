@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { GlassCard } from '@/components/layout/GlassCard';
-import { Plus, Edit2, Trash2, Loader2, Repeat, PlayCircle } from 'lucide-react';
+import { Plus, Edit2, Trash2, Loader2, Repeat } from 'lucide-react';
 import { BottomSheet } from '@/components/ui/BottomSheet';
 import { formatRupiah } from '@/lib/format';
 import { fetchUserRecurringAction, createRecurringAction, updateRecurringAction, deleteRecurringAction } from '@/actions/recurring.actions';
@@ -113,20 +113,6 @@ export function RecurringSettings() {
         }
     };
 
-    const handleRunCron = async () => {
-        try {
-            setIsSubmitting(true);
-            const res = await fetch('/api/cron/recurring');
-            const data = await res.json();
-            alert(`Cron run success. Processed ${data.processedCount} transactions.`);
-            loadData();
-        } catch(e) {
-            alert('Failed to run cron');
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
-
     const filteredCategories = categories.filter(c => 
         type === 'INCOME' ? c.type === 'INCOME' : c.type !== 'INCOME'
     );
@@ -138,23 +124,13 @@ export function RecurringSettings() {
                     <Repeat className="w-4 h-4 text-muted" />
                     Transaksi Berulang
                 </h2>
-                <div className="flex gap-2">
-                    <button
-                        onClick={handleRunCron}
-                        className="p-1.5 hover:bg-card-hover rounded-md text-foreground transition-colors"
-                        title="Simulasikan Cron Job"
-                        disabled={isSubmitting}
-                    >
-                        <PlayCircle className="w-4 h-4" />
-                    </button>
-                    <button
-                        onClick={handleOpenCreate}
-                        className="p-1.5 hover:bg-card-hover rounded-md text-foreground transition-colors"
-                        title="Tambah Transaksi Berulang"
-                    >
-                        <Plus className="w-4 h-4" />
-                    </button>
-                </div>
+                <button
+                    onClick={handleOpenCreate}
+                    className="p-1.5 hover:bg-card-hover rounded-md text-foreground transition-colors"
+                    title="Tambah Transaksi Berulang"
+                >
+                    <Plus className="w-4 h-4" />
+                </button>
             </div>
             
             <GlassCard className="divide-y divide-border-subtle">

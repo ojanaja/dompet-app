@@ -197,7 +197,7 @@ export function LogContent({ transactions, currentPage, hasMore }: LogContentPro
                         className="flex-shrink-0 flex items-center gap-1.5 bg-foreground text-background px-3 py-1.5 rounded-md text-xs font-medium hover:bg-neutral-200 transition-colors"
                     >
                         <Download className="w-3 h-3" />
-                        CSV
+                        CSV Halaman Ini
                     </button>
                 </div>
             </div>

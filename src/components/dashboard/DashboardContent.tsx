@@ -77,13 +77,13 @@ export function DashboardContent({ data, currentMonth, currentYear }: DashboardC
 
             {/* Balance */}
             <GlassCard className="p-5">
-                <p className="text-xs text-muted mb-1">Saldo Keseluruhan</p>
+                <p className="text-xs text-muted mb-1">Saldo Saat Ini</p>
                 <p className={`text-3xl font-semibold tabular-nums tracking-tight ${
                     data.totalBalance >= 0 ? 'text-foreground' : 'text-danger'
                 }`}>
                     {data.totalBalance >= 0 ? '+' : ''}{formatRupiah(data.totalBalance)}
                 </p>
-                <p className="text-xs text-muted-foreground mt-1">{data.transactionCount} transaksi bulan ini</p>
+                <p className="text-xs text-muted-foreground mt-1">Total saldo aktual semua dompet</p>
                 
                 {/* Wallets breakdown */}
                 {data.wallets && data.wallets.length > 0 && (
@@ -97,6 +97,10 @@ export function DashboardContent({ data, currentMonth, currentYear }: DashboardC
                     </div>
                 )}
             </GlassCard>
+
+            <h2 className="text-xs text-muted uppercase tracking-widest font-medium px-1">
+                Ringkasan {monthName}
+            </h2>
 
             {/* Income / Expense Row */}
             <div className="grid grid-cols-2 gap-3">
@@ -188,7 +192,7 @@ export function DashboardContent({ data, currentMonth, currentYear }: DashboardC
             {/* Recent Transactions */}
             {data.recentTransactions.length > 0 && (
                 <GlassCard className="p-5">
-                    <h2 className="text-xs text-muted uppercase tracking-widest font-medium mb-4">Terbaru</h2>
+                    <h2 className="text-xs text-muted uppercase tracking-widest font-medium mb-4">Terbaru Bulan Ini</h2>
                     <div className="space-y-0 divide-y divide-border-subtle">
                         {data.recentTransactions.map((tx) => (
                             <div key={tx.id} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">

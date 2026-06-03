@@ -112,6 +112,9 @@ export function WalletSettings() {
                     <Plus className="w-4 h-4" />
                 </button>
             </div>
+            <p className="text-xs text-muted-foreground mb-3">
+                Saldo dompet adalah saldo aktual saat ini, bukan saldo per bulan.
+            </p>
             
             <GlassCard className="divide-y divide-border-subtle">
                 {isLoading ? (

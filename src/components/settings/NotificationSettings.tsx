@@ -164,21 +164,7 @@ export function NotificationSettings({ userId }: NotificationSettingsProps) {
                         <div className="w-1 h-1 rounded-full bg-muted mt-2 shrink-0" />
                         <div className="space-y-1">
                             <p className="text-xs font-medium text-foreground">Pengingat Utang</p>
-                            <p className="text-[11px] text-muted leading-relaxed">Dapatkan notifikasi otomatis saat utang mendekati jatuh tempo.</p>
-                        </div>
-                    </li>
-                    <li className="flex gap-3">
-                        <div className="w-1 h-1 rounded-full bg-muted mt-2 shrink-0" />
-                        <div className="space-y-1">
-                            <p className="text-xs font-medium text-foreground">Batas Anggaran</p>
-                            <p className="text-[11px] text-muted leading-relaxed">Peringatan saat pengeluaran kategori melebihi 80% dari budget.</p>
-                        </div>
-                    </li>
-                    <li className="flex gap-3">
-                        <div className="w-1 h-1 rounded-full bg-muted mt-2 shrink-0" />
-                        <div className="space-y-1">
-                            <p className="text-xs font-medium text-foreground">Laporan Bulanan</p>
-                            <p className="text-[11px] text-muted leading-relaxed">Ringkasan pengeluaran di akhir bulan langsung ke perangkat Anda.</p>
+                            <p className="text-[11px] text-muted leading-relaxed">Dapatkan notifikasi berkala untuk utang yang belum ditandai lunas.</p>
                         </div>
                     </li>
                 </ul>
