@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { createTransactionAction, updateTransactionAction } from '@/actions/transaction.actions';
+import type { Prisma } from '@prisma/client';
 
 interface Category {
     id: string;
@@ -15,10 +16,24 @@ interface Wallet {
     name: string;
 }
 
+interface TransactionDraft {
+    title: string;
+    amount: number;
+    type: 'INCOME' | 'EXPENSE';
+    categoryId: string | null;
+    walletId: string | null;
+    date?: Date | string;
+    notes: string | null;
+    metadata?: Prisma.InputJsonValue;
+}
+
 interface TransactionFormProps {
     categories: Category[];
     wallets: Wallet[];
-    onSuccess: () => void;
+    onSuccess: (result?: TransactionFormResult) => void;
+    initialDraft?: TransactionDraft;
+    submitLabel?: string;
+    onCancel?: () => void;
     initialData?: {
         id: string;
         title: string;
@@ -31,19 +46,29 @@ interface TransactionFormProps {
     };
 }
 
-export function TransactionForm({ categories, wallets, onSuccess, initialData }: TransactionFormProps) {
+export type TransactionFormResult =
+    | Awaited<ReturnType<typeof createTransactionAction>>
+    | Awaited<ReturnType<typeof updateTransactionAction>>;
+
+export function TransactionForm({ categories, wallets, onSuccess, initialDraft, submitLabel, onCancel, initialData }: TransactionFormProps) {
     const isEdit = !!initialData;
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
-    const [type, setType] = useState<'INCOME' | 'EXPENSE'>(initialData?.type || 'EXPENSE');
-    const [title, setTitle] = useState(initialData?.title || '');
-    const [amount, setAmount] = useState(initialData?.amount ? String(initialData.amount) : '');
-    const [categoryId, setCategoryId] = useState(initialData?.categoryId || '');
-    const [walletId, setWalletId] = useState(initialData?.walletId || (wallets.length > 0 ? wallets[0].id : ''));
+    const [type, setType] = useState<'INCOME' | 'EXPENSE'>(initialData?.type || initialDraft?.type || 'EXPENSE');
+    const [title, setTitle] = useState(initialData?.title || initialDraft?.title || '');
+    const [amount, setAmount] = useState(
+        initialData?.amount
+            ? String(initialData.amount)
+            : initialDraft?.amount
+                ? String(initialDraft.amount)
+                : ''
+    );
+    const [categoryId, setCategoryId] = useState(initialData?.categoryId || initialDraft?.categoryId || '');
+    const [walletId, setWalletId] = useState(initialData?.walletId || initialDraft?.walletId || (wallets.length > 0 ? wallets[0].id : ''));
     
     const defaultDate = () => {
-        const d = initialData?.date ? new Date(initialData.date) : new Date();
+        const d = initialData?.date ? new Date(initialData.date) : initialDraft?.date ? new Date(initialDraft.date) : new Date();
         const yyyy = d.getFullYear();
         const mm = String(d.getMonth() + 1).padStart(2, '0');
         const dd = String(d.getDate()).padStart(2, '0');
@@ -51,7 +76,7 @@ export function TransactionForm({ categories, wallets, onSuccess, initialData }:
     };
 
     const [date, setDate] = useState(defaultDate());
-    const [notes, setNotes] = useState(initialData?.notes || '');
+    const [notes, setNotes] = useState(initialData?.notes || initialDraft?.notes || '');
 
     const filteredCategories = categories.filter(c => 
         type === 'INCOME' ? c.type === 'INCOME' : c.type !== 'INCOME'
@@ -83,6 +108,7 @@ export function TransactionForm({ categories, wallets, onSuccess, initialData }:
                 walletId,
                 date: new Date(date).toISOString(),
                 notes: notes || null,
+                metadata: initialDraft?.metadata,
             };
 
             let res;
@@ -93,12 +119,13 @@ export function TransactionForm({ categories, wallets, onSuccess, initialData }:
             }
 
             if (res.success) {
-                onSuccess();
+                onSuccess(res);
             } else {
                 setError(res.error || 'Terjadi kesalahan sistem.');
             }
-        } catch (err: any) {
-            setError(err.message || 'Terjadi kesalahan sistem.');
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : 'Terjadi kesalahan sistem.';
+            setError(message);
         } finally {
             setLoading(false);
         }
@@ -233,13 +260,25 @@ export function TransactionForm({ categories, wallets, onSuccess, initialData }:
                 <p className="text-xs text-danger font-mono">{error}</p>
             )}
 
-            <button
-                type="submit"
-                disabled={loading}
-                className="w-full mt-2 bg-foreground text-background font-semibold text-xs py-3 rounded-lg hover:bg-neutral-200 transition-colors duration-150 flex items-center justify-center gap-1.5 uppercase tracking-widest font-mono disabled:opacity-50"
-            >
-                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : (isEdit ? 'Simpan Perubahan' : 'Catat Transaksi')}
-            </button>
+            <div className="flex gap-2">
+                {onCancel && (
+                    <button
+                        type="button"
+                        onClick={onCancel}
+                        disabled={loading}
+                        className="flex-1 mt-2 border border-border text-foreground font-semibold text-xs py-3 rounded-lg hover:bg-card-hover transition-colors duration-150 uppercase tracking-widest font-mono disabled:opacity-50"
+                    >
+                        Batal
+                    </button>
+                )}
+                <button
+                    type="submit"
+                    disabled={loading}
+                    className="flex-1 mt-2 bg-foreground text-background font-semibold text-xs py-3 rounded-lg hover:bg-neutral-200 transition-colors duration-150 flex items-center justify-center gap-1.5 uppercase tracking-widest font-mono disabled:opacity-50"
+                >
+                    {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : (submitLabel || (isEdit ? 'Simpan Perubahan' : 'Catat Transaksi'))}
+                </button>
+            </div>
         </form>
     );
 }

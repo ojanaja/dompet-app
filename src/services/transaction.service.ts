@@ -5,7 +5,13 @@ import { debtRepository } from '@/repositories/debt.repository';
 import { walletRepository } from '@/repositories/wallet.repository';
 import { WalletService } from './wallet.service';
 import { AIService } from './ai.service';
-import type { Prisma } from '@prisma/client';
+import type { CategoryType, Prisma } from '@prisma/client';
+
+type TransactionMetadata = {
+    categorySuggested?: CategoryType;
+    isDebt?: boolean;
+    debtorName?: string;
+};
 
 export class TransactionService {
     /**
@@ -14,7 +20,7 @@ export class TransactionService {
     static async getUserTransactions(userId: string, take?: number, skip?: number, startDate?: Date, endDate?: Date) {
         if (!userId) throw new Error("User ID is required");
         
-        const where: any = { userId };
+        const where: Prisma.TransactionWhereInput = { userId };
         
         if (startDate || endDate) {
             where.date = {};
@@ -56,11 +62,13 @@ export class TransactionService {
      * Membuat transaksi baru beserta validasi bisnis logik dan AI Feedback.
      */
     static async createTransaction(data: Prisma.TransactionUncheckedCreateInput) {
-        if (data.amount <= 0) {
+        if (typeof data.amount !== 'number' || !Number.isFinite(data.amount) || data.amount <= 0) {
             throw new Error("Amount must be greater than 0");
         }
 
-        const metadata = data.metadata as any;
+        const metadata = data.metadata && typeof data.metadata === 'object' && !Array.isArray(data.metadata)
+            ? data.metadata as TransactionMetadata
+            : null;
 
         // 1. Cari atau buat categoryId berdasarkan metadata AI jika categoryId belum ada
         let categoryId = data.categoryId;

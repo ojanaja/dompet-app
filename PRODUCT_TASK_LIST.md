@@ -53,35 +53,35 @@ Tujuan: mengurangi kebingungan user tanpa rombak database besar.
 
 Tujuan: semua transaksi yang masuk bisa dipercaya, diedit, dan diaudit.
 
-- [ ] Ubah Chat AI dari auto-save menjadi review-before-save.
+- [x] Ubah Chat AI dari auto-save menjadi review-before-save.
   - Area: `src/components/chat/ChatPanel.tsx`
   - Flow target: user input -> AI parse -> review card -> user confirm -> create transaction.
 
-- [ ] Review card Chat menampilkan nominal, tipe, judul, kategori, wallet, tanggal, dan notes.
+- [x] Review card Chat menampilkan nominal, tipe, judul, kategori, wallet, tanggal, dan notes.
   - Area: `src/components/chat/ChatPanel.tsx`, `src/components/transaction/TransactionForm.tsx`
   - Reuse: gunakan pola/form existing dari `TransactionForm`.
 
-- [ ] Chat review card harus bisa edit kategori sebelum save.
+- [x] Chat review card harus bisa edit kategori sebelum save.
   - Area: `src/components/chat/ChatPanel.tsx`, `src/actions/core.actions.ts`
   - Alasan: AI saat ini hanya memilih `CategoryType`, bukan kategori spesifik.
 
-- [ ] Chat review card harus bisa edit wallet sebelum save.
+- [x] Chat review card harus bisa edit wallet sebelum save.
   - Area: `src/components/chat/ChatPanel.tsx`, `src/actions/wallet.actions.ts`
   - Alasan: transaksi chat sekarang masuk wallet default.
 
-- [ ] Tambahkan action `Cancel draft` di hasil parse chat.
+- [x] Tambahkan action `Cancel draft` di hasil parse chat.
   - Area: `src/components/chat/ChatPanel.tsx`
   - Alasan: user harus bisa membatalkan hasil AI yang salah.
 
-- [ ] Tambahkan feedback setelah save dengan shortcut ke Log atau edit cepat.
+- [x] Tambahkan feedback setelah save dengan shortcut ke Log atau edit cepat.
   - Area: `src/components/chat/ChatPanel.tsx`
   - Alasan: tetap memberi jalan koreksi setelah transaksi dibuat.
 
-- [ ] Pastikan manual transaction form tetap menjadi flow utama yang stabil.
+- [x] Pastikan manual transaction form tetap menjadi flow utama yang stabil.
   - Area: `src/components/transaction/TransactionForm.tsx`, `src/components/transaction/GlobalFAB.tsx`
   - Alasan: manual flow adalah fallback paling akurat.
 
-- [ ] Validasi form transaksi untuk amount invalid/NaN.
+- [x] Validasi form transaksi untuk amount invalid/NaN.
   - Area: `src/components/transaction/TransactionForm.tsx`, `src/services/transaction.service.ts`
   - Alasan: parsing input nominal manual perlu aman.
 

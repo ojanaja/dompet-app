@@ -3,14 +3,54 @@
 import { useState, useRef, useEffect, FormEvent } from 'react';
 import { Send, Loader2, Image as ImageIcon } from 'lucide-react';
 import { parseTransactionMessageAction, parseTransactionImageAction } from '@/actions/ai.actions';
-import { createTransactionAction } from '@/actions/transaction.actions';
+import { fetchCategoriesAction } from '@/actions/core.actions';
+import { fetchUserWalletsAction } from '@/actions/wallet.actions';
+import { TransactionForm } from '@/components/transaction/TransactionForm';
+import type { TransactionFormResult } from '@/components/transaction/TransactionForm';
 import type { Prisma } from '@prisma/client';
+
+type Category = {
+    id: string;
+    name: string;
+    type: string;
+};
+
+type Wallet = {
+    id: string;
+    name: string;
+};
+
+type ParsedTransactionDraft = {
+    amount: number;
+    title: string;
+    type: 'INCOME' | 'EXPENSE';
+    categorySuggested: 'ESSENTIAL' | 'LIFESTYLE' | 'INCOME' | 'PROJECT';
+    notes?: string;
+    isDebt?: boolean;
+    debtorName?: string;
+};
+
+type TransactionDraft = {
+    title: string;
+    amount: number;
+    type: 'INCOME' | 'EXPENSE';
+    categoryId: string | null;
+    walletId: string | null;
+    date: string;
+    notes: string | null;
+    metadata: Prisma.InputJsonValue;
+};
 
 type Message = {
     id: string;
     role: 'user' | 'assistant';
     content: string;
     isError?: boolean;
+    draft?: TransactionDraft;
+    action?: {
+        href: string;
+        label: string;
+    };
     transactionInfo?: {
         type: 'INCOME' | 'EXPENSE';
         amount: number;
@@ -29,6 +69,8 @@ export function ChatPanel() {
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
+    const [categories, setCategories] = useState<Category[]>([]);
+    const [wallets, setWallets] = useState<Wallet[]>([]);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -36,6 +78,99 @@ export function ChatPanel() {
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
+
+    const loadReviewOptions = async () => {
+        if (categories.length > 0 && wallets.length > 0) {
+            return { categories, wallets };
+        }
+
+        const [catRes, walletRes] = await Promise.all([
+            fetchCategoriesAction(),
+            fetchUserWalletsAction(),
+        ]);
+
+        const nextCategories = catRes.success && catRes.data ? catRes.data : [];
+        const nextWallets = walletRes.success && walletRes.data ? walletRes.data : [];
+
+        setCategories(nextCategories);
+        setWallets(nextWallets);
+
+        return { categories: nextCategories, wallets: nextWallets };
+    };
+
+    const buildDraft = (
+        parsedData: ParsedTransactionDraft,
+        reviewCategories: Category[],
+        reviewWallets: Wallet[]
+    ): TransactionDraft => {
+        const matchingCategories = reviewCategories.filter(category =>
+            parsedData.type === 'INCOME'
+                ? category.type === 'INCOME'
+                : category.type !== 'INCOME'
+        );
+        const suggestedCategory = matchingCategories.find(category => category.type === parsedData.categorySuggested);
+        const fallbackCategory = matchingCategories[0] || null;
+
+        return {
+            amount: parsedData.amount,
+            title: parsedData.title,
+            type: parsedData.type,
+            categoryId: suggestedCategory?.id || fallbackCategory?.id || null,
+            walletId: reviewWallets[0]?.id || null,
+            date: new Date().toISOString(),
+            notes: parsedData.notes || `Kategori: ${parsedData.categorySuggested}`,
+            metadata: parsedData as Prisma.InputJsonValue,
+        };
+    };
+
+    const appendDraftMessage = async (messageId: string, parsedData: ParsedTransactionDraft) => {
+        const reviewOptions = await loadReviewOptions();
+        const draft = buildDraft(parsedData, reviewOptions.categories, reviewOptions.wallets);
+
+        setMessages(prev => [...prev, {
+            id: `${messageId}-draft`,
+            role: 'assistant',
+            content: 'Aku sudah baca transaksinya. Cek dulu detailnya sebelum disimpan.',
+            draft,
+        }]);
+    };
+
+    const handleCancelDraft = (messageId: string) => {
+        setMessages(prev => prev.map(message =>
+            message.id === messageId
+                ? {
+                    id: message.id,
+                    role: 'assistant',
+                    content: 'Draft dibatalkan.',
+                }
+                : message
+        ));
+    };
+
+    const handleDraftSaved = (messageId: string, fallbackDraft: TransactionDraft, result?: TransactionFormResult) => {
+        const savedData = result?.success && result.data && 'transaction' in result.data ? result.data : null;
+        const savedTransaction = savedData?.transaction || null;
+        const aiFeedback = savedData?.aiFeedback || null;
+
+        setMessages(prev => prev.map(message =>
+            message.id === messageId
+                ? {
+                    id: message.id,
+                    role: 'assistant',
+                    content: `${aiFeedback || 'Transaksi berhasil dicatat.'}\n\nLihat atau koreksi detailnya di Log.`,
+                    action: {
+                        href: '/log',
+                        label: 'Buka Log',
+                    },
+                    transactionInfo: {
+                        type: savedTransaction?.type || fallbackDraft.type,
+                        amount: savedTransaction?.amount || fallbackDraft.amount,
+                        title: savedTransaction?.title || fallbackDraft.title,
+                    },
+                }
+                : message
+        ));
+    };
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
@@ -56,37 +191,7 @@ export function ChatPanel() {
             }
 
             const parsedData = parseResult.data;
-
-            const transactionData: Omit<Prisma.TransactionUncheckedCreateInput, 'userId'> = {
-                amount: parsedData.amount,
-                title: parsedData.title,
-                type: parsedData.type,
-                notes: parsedData.notes || `Kategori: ${parsedData.categorySuggested}`,
-                metadata: parsedData as any,
-            };
-
-            const createResult = await createTransactionAction(transactionData);
-
-            if (!createResult.success || !createResult.data) {
-                setMessages(prev => [...prev, {
-                    id: newId + '-resp',
-                    role: 'assistant',
-                    content: `Parsed: ${parsedData.title} Rp${parsedData.amount.toLocaleString('id-ID')}. Gagal simpan ke database.`,
-                    isError: true,
-                }]);
-            } else {
-                const { aiFeedback } = createResult.data;
-                setMessages(prev => [...prev, {
-                    id: newId + '-resp',
-                    role: 'assistant',
-                    content: aiFeedback,
-                    transactionInfo: {
-                        type: parsedData.type,
-                        amount: parsedData.amount,
-                        title: parsedData.title,
-                    },
-                }]);
-            }
+            await appendDraftMessage(newId, parsedData);
 
         } catch (error: unknown) {
             const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -145,37 +250,7 @@ export function ChatPanel() {
             }
 
             const parsedData = parseResult.data;
-
-            const transactionData: Omit<Prisma.TransactionUncheckedCreateInput, 'userId'> = {
-                amount: parsedData.amount,
-                title: parsedData.title,
-                type: parsedData.type,
-                notes: parsedData.notes || `Kategori: ${parsedData.categorySuggested}`,
-                metadata: parsedData as any,
-            };
-
-            const createResult = await createTransactionAction(transactionData);
-
-            if (!createResult.success || !createResult.data) {
-                setMessages(prev => [...prev, {
-                    id: newId + '-resp',
-                    role: 'assistant',
-                    content: `Parsed dari gambar: ${parsedData.title} Rp${parsedData.amount.toLocaleString('id-ID')}. Gagal simpan ke database.`,
-                    isError: true,
-                }]);
-            } else {
-                const { aiFeedback } = createResult.data;
-                setMessages(prev => [...prev, {
-                    id: newId + '-resp',
-                    role: 'assistant',
-                    content: aiFeedback,
-                    transactionInfo: {
-                        type: parsedData.type,
-                        amount: parsedData.amount,
-                        title: parsedData.title,
-                    },
-                }]);
-            }
+            await appendDraftMessage(newId, parsedData);
 
         } catch (error: unknown) {
             const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -221,6 +296,18 @@ export function ChatPanel() {
                             }`}
                         >
                             <p className="whitespace-pre-line">{msg.content}</p>
+                            {msg.draft && (
+                                <div className="mt-3 rounded-xl border border-border-subtle bg-background/40 p-3">
+                                    <TransactionForm
+                                        categories={categories}
+                                        wallets={wallets}
+                                        initialDraft={msg.draft}
+                                        submitLabel="Simpan"
+                                        onCancel={() => handleCancelDraft(msg.id)}
+                                        onSuccess={(result) => handleDraftSaved(msg.id, msg.draft!, result)}
+                                    />
+                                </div>
+                            )}
                             {msg.transactionInfo && (
                                 <div className={`mt-2.5 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-mono ${
                                     msg.transactionInfo.type === 'EXPENSE'
@@ -230,6 +317,14 @@ export function ChatPanel() {
                                     <span>{msg.transactionInfo.type === 'EXPENSE' ? '−' : '+'}</span>
                                     <span>Rp{msg.transactionInfo.amount.toLocaleString('id-ID')}</span>
                                 </div>
+                            )}
+                            {msg.action && (
+                                <a
+                                    href={msg.action.href}
+                                    className="mt-3 inline-flex rounded-md border border-border px-2.5 py-1 text-xs font-medium text-foreground hover:bg-card-hover transition-colors"
+                                >
+                                    {msg.action.label}
+                                </a>
                             )}
                         </div>
                     </div>
