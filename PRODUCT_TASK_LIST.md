@@ -191,34 +191,34 @@ Tujuan: Dashboard memberi insight yang tepat tanpa scope yang rancu.
 
 Tujuan: budget menjadi fitur bulanan yang jelas dan bisa dikelola.
 
-- [ ] Tambahkan month/year picker di Budget Settings.
+- [x] Tambahkan month/year picker di Budget Settings.
   - Area: `src/components/settings/BudgetSettings.tsx`, `src/app/(app)/settings/page.tsx`
   - Alasan: budget saat ini hanya bulan berjalan.
 
-- [ ] Tampilkan daftar budget bulan terpilih.
+- [x] Tampilkan daftar budget bulan terpilih.
   - Area: `src/components/settings/BudgetSettings.tsx`
   - Alasan: user melihat semua budget yang sudah diatur.
 
-- [ ] Tambahkan edit budget eksplisit.
+- [x] Tambahkan edit budget eksplisit.
   - Area: `src/components/settings/BudgetSettings.tsx`, `src/actions/core.actions.ts`
   - Alasan: saat ini edit tersirat dari memilih kategori.
 
-- [ ] Tambahkan delete budget.
+- [x] Tambahkan delete budget.
   - Area: `src/actions/core.actions.ts`, `src/services/budget.service.ts`, `src/repositories/budget.repository.ts`
   - Alasan: user harus bisa menghapus budget yang tidak relevan.
 
-- [ ] Tambahkan validasi budget amount.
+- [x] Tambahkan validasi budget amount.
   - Area: `src/components/settings/BudgetSettings.tsx`, `src/services/budget.service.ts`
   - Alasan: nominal kosong/NaN harus ditolak.
 
-- [ ] Putuskan apakah budget alert push benar-benar akan dibuat.
+- [x] Putuskan apakah budget alert push benar-benar akan dibuat.
   - Area: product decision
   - Opsi A: hide selamanya.
   - Opsi B: trigger saat transaksi membuat spent melewati 80%.
 
-- [ ] Jika buat budget alert, implement trigger saat create/update transaction.
+- [x] Jika buat budget alert, implement trigger saat create/update transaction.
   - Area: `src/services/transaction.service.ts`, `src/services/push.service.ts`
-  - Alasan: alert harus muncul saat crossing threshold, bukan sekadar copy UI.
+  - Keputusan: tidak dibuat di MVP karena budget alert push dipilih `hide`; tidak ada trigger yang perlu diimplementasikan.
 
 ## Phase 6 - Kategori
 

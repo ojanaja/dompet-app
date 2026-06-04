@@ -8,7 +8,7 @@ import { getDefaultUser } from '@/lib/user.server';
 import { revalidatePath, updateTag } from 'next/cache';
 import { unstable_cache } from 'next/cache';
 import { CACHE_TAGS, CACHE_TTL } from '@/lib/cache';
-import type { Prisma, CategoryType } from '@prisma/client';
+import type { Prisma } from '@prisma/client';
 
 // Cached: kategori jarang berubah, aman di-cache 1 jam
 const getCachedCategories = unstable_cache(
@@ -65,6 +65,30 @@ export async function createBudgetAction(data: Omit<Prisma.BudgetUncheckedCreate
     updateTag(CACHE_TAGS.BUDGETS);
     updateTag(CACHE_TAGS.DASHBOARD);
     revalidatePath(pathToRevalidate);
+    return result;
+  });
+}
+
+export async function updateBudgetAction(id: string, amount: number, pathToRevalidate: string = '/') {
+  const user = await getDefaultUser();
+  return withActionHandler(async () => {
+    const result = await BudgetService.updateBudget(id, user.id, amount);
+    updateTag(CACHE_TAGS.BUDGETS);
+    updateTag(CACHE_TAGS.DASHBOARD);
+    revalidatePath(pathToRevalidate);
+    revalidatePath('/dashboard');
+    return result;
+  });
+}
+
+export async function deleteBudgetAction(id: string, pathToRevalidate: string = '/') {
+  const user = await getDefaultUser();
+  return withActionHandler(async () => {
+    const result = await BudgetService.deleteBudget(id, user.id);
+    updateTag(CACHE_TAGS.BUDGETS);
+    updateTag(CACHE_TAGS.DASHBOARD);
+    revalidatePath(pathToRevalidate);
+    revalidatePath('/dashboard');
     return result;
   });
 }

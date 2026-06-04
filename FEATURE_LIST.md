@@ -228,6 +228,13 @@ Dokumen ini memetakan fitur yang saat ini ada di project `dompet`, berdasarkan r
 - Tambahkan month picker di Settings budget atau pindahkan budget management ke halaman khusus.
 - Jangan klaim budget push alert sampai benar-benar ada trigger.
 
+**Keputusan Phase 5**
+
+- Budget Settings memakai periode terpilih lewat query `budgetMonth` dan `budgetYear`.
+- Budget bulan terpilih ditampilkan sebagai daftar, dengan edit dan delete eksplisit.
+- Nominal budget divalidasi di client dan service layer.
+- Budget alert push tidak dibuat untuk MVP; copy UI tetap di-hide sampai ada trigger produk yang jelas.
+
 ### 9. Debt / Utang
 
 **Yang ada**

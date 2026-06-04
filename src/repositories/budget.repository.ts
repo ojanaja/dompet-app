@@ -10,6 +10,14 @@ class BudgetRepository extends BaseRepository<Prisma.BudgetDelegate> {
   async findUserBudgets(userId: string, month: number, year: number) {
     return this.model.findMany({
       where: { userId, month, year },
+      include: { category: true },
+      orderBy: { category: { name: 'asc' } }
+    });
+  }
+
+  async findUserBudgetById(id: string, userId: string) {
+    return this.model.findFirst({
+      where: { id, userId },
       include: { category: true }
     });
   }

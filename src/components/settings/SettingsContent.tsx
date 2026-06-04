@@ -23,12 +23,20 @@ interface SettingsContentProps {
         transaction: { title: string } | null;
     }>;
     budgets: Array<{
+        id: string;
         categoryId: string;
         amount: number;
+        category: {
+            id: string;
+            name: string;
+            type: string;
+        };
     }>;
+    budgetMonth: number;
+    budgetYear: number;
 }
 
-export function SettingsContent({ user, categories, debts, budgets }: SettingsContentProps) {
+export function SettingsContent({ user, categories, debts, budgets, budgetMonth, budgetYear }: SettingsContentProps) {
     const router = useRouter();
     const [payingId, setPayingId] = useState<string | null>(null);
 
@@ -145,9 +153,14 @@ export function SettingsContent({ user, categories, debts, budgets }: SettingsCo
             <GlassCard className="p-5">
                 <div className="flex items-center gap-2 mb-4">
                     <Target className="w-3.5 h-3.5 text-muted" />
-                    <h2 className="text-xs text-muted uppercase tracking-widest font-medium">Anggaran Bulan Ini</h2>
+                    <h2 className="text-xs text-muted uppercase tracking-widest font-medium">Anggaran Bulanan</h2>
                 </div>
-                <BudgetSettings categories={categories} budgets={budgets} />
+                <BudgetSettings
+                    categories={categories}
+                    budgets={budgets}
+                    selectedMonth={budgetMonth}
+                    selectedYear={budgetYear}
+                />
             </GlassCard>
         </>
     );
