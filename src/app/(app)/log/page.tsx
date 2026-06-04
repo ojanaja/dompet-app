@@ -1,34 +1,38 @@
 import { LogContent } from '@/components/log/LogContent';
 import { fetchUserTransactionsAction } from '@/actions/transaction.actions';
+import { parseLogQueryParams } from '@/lib/log-query';
 
 interface LogPageProps {
   searchParams: Promise<{ 
     page?: string;
     start?: string;
     end?: string;
+    q?: string;
+    type?: string;
   }>;
 }
 
 export default async function LogPage(props: LogPageProps) {
   const searchParams = await props.searchParams;
-  const page = searchParams.page ? parseInt(searchParams.page) : 1;
+  const { page, startDate, endDate, search, type, hasActiveFilters } = parseLogQueryParams(searchParams);
   const take = 20; // 20 item per halaman
   const skip = (page - 1) * take;
 
-  const startDate = searchParams.start ? new Date(searchParams.start) : undefined;
-  const endDate = searchParams.end ? new Date(searchParams.end) : undefined;
-  if (endDate) {
-    // Include the whole end day
-    endDate.setHours(23, 59, 59, 999);
-  }
-
-  const result = await fetchUserTransactionsAction(take, skip, startDate, endDate);
+  const result = await fetchUserTransactionsAction({
+    take,
+    skip,
+    startDate,
+    endDate,
+    search,
+    type,
+  });
 
   return (
     <LogContent 
-      transactions={result.success ? result.data as any : []} 
+      transactions={result.success ? result.data || [] : []} 
       currentPage={page}
       hasMore={!!(result.success && result.data && result.data.length === take)}
+      hasActiveFilters={hasActiveFilters}
     />
   );
 }

@@ -12,27 +12,49 @@ type TransactionMetadata = {
     debtorName?: string;
 };
 
+export type TransactionQuery = {
+    take?: number;
+    skip?: number;
+    startDate?: Date;
+    endDate?: Date;
+    search?: string;
+    type?: TransactionType;
+};
+
 export class TransactionService {
     /**
      * Mendapatkan semua transaksi untuk user spesifik dengan pagination.
      */
-    static async getUserTransactions(userId: string, take?: number, skip?: number, startDate?: Date, endDate?: Date) {
+    static async getUserTransactions(userId: string, query: TransactionQuery = {}) {
         if (!userId) throw new Error("User ID is required");
         
         const where: Prisma.TransactionWhereInput = { userId };
         
-        if (startDate || endDate) {
+        if (query.startDate || query.endDate) {
             where.date = {};
-            if (startDate) where.date.gte = startDate;
-            if (endDate) where.date.lte = endDate;
+            if (query.startDate) where.date.gte = query.startDate;
+            if (query.endDate) where.date.lte = query.endDate;
         }
 
-        return transactionRepository.findAll({
+        if (query.type) {
+            where.type = query.type;
+        }
+
+        const search = query.search?.trim();
+        if (search) {
+            where.OR = [
+                { title: { contains: search, mode: 'insensitive' } },
+                { notes: { contains: search, mode: 'insensitive' } },
+                { category: { is: { name: { contains: search, mode: 'insensitive' } } } },
+                { wallet: { is: { name: { contains: search, mode: 'insensitive' } } } },
+            ];
+        }
+
+        return transactionRepository.findUserTransactions({
             where,
-            include: { category: true, wallet: true },
             orderBy: { date: 'desc' },
-            take,
-            skip
+            take: query.take,
+            skip: query.skip
         });
     }
 

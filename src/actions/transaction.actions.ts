@@ -6,13 +6,14 @@ import { getDefaultUser } from '@/lib/user.server';
 import { revalidatePath, updateTag } from 'next/cache';
 import { CACHE_TAGS } from '@/lib/cache';
 import type { Prisma } from '@prisma/client';
+import type { TransactionQuery } from '@/services/transaction.service';
 
-export async function fetchUserTransactionsAction(take?: number, skip?: number, startDate?: Date, endDate?: Date) {
+export async function fetchUserTransactionsAction(query: TransactionQuery = {}) {
     const user = await getDefaultUser();
     // Transactions list is NOT cached because it has too many param combos
     // and is already fast with Prisma query + pagination.
     // Dashboard aggregate IS cached separately.
-    return withActionHandler(() => TransactionService.getUserTransactions(user.id, take, skip, startDate, endDate));
+    return withActionHandler(() => TransactionService.getUserTransactions(user.id, query));
 }
 
 export async function deleteTransactionAction(transactionId: string, pathToRevalidate: string = '/log') {

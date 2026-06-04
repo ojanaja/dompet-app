@@ -125,32 +125,32 @@ Tujuan: saldo wallet menjadi source of truth yang jelas dan tidak terasa magic.
 
 Tujuan: Log menjadi audit trail utama yang bisa dicari dan diekspor dengan benar.
 
-- [ ] Pindahkan search Log ke server-side query.
+- [x] Pindahkan search Log ke server-side query.
   - Area: `src/app/(app)/log/page.tsx`, `src/services/transaction.service.ts`
   - Alasan: search client-side hanya mencari page saat ini.
 
-- [ ] Pindahkan filter tipe Log ke server-side query.
+- [x] Pindahkan filter tipe Log ke server-side query.
   - Area: `src/app/(app)/log/page.tsx`, `src/components/log/LogContent.tsx`, `src/services/transaction.service.ts`
   - Alasan: filter harus berlaku ke seluruh dataset.
 
-- [ ] Jadikan search/filter/page sebagai query params yang stabil.
+- [x] Jadikan search/filter/page sebagai query params yang stabil.
   - Area: `src/components/log/LogContent.tsx`
   - Alasan: state bisa di-refresh, dibagikan, dan dipakai export.
 
-- [ ] Tambahkan reset filter yang membersihkan semua query.
+- [x] Tambahkan reset filter yang membersihkan semua query.
   - Area: `src/components/log/LogContent.tsx`
   - Alasan: UX filter lebih jelas.
 
-- [ ] Putuskan export CSV: page-only atau all filtered.
+- [x] Putuskan export CSV: page-only atau all filtered.
   - Area: product decision
   - Opsi A: tetap page-only dengan label jelas.
   - Opsi B: server export semua hasil filter.
 
-- [ ] Jika pilih all-filtered export, buat endpoint export CSV.
+- [x] Jika pilih all-filtered export, buat endpoint export CSV.
   - Area: `src/app/api/...`, `src/services/transaction.service.ts`
   - Alasan: client tidak memegang semua data.
 
-- [ ] Tambahkan empty state yang membedakan tidak ada data vs filter tidak cocok.
+- [x] Tambahkan empty state yang membedakan tidak ada data vs filter tidak cocok.
   - Area: `src/components/log/LogContent.tsx`
   - Alasan: user tahu apakah perlu tambah transaksi atau ubah filter.
 

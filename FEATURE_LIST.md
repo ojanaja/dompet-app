@@ -172,6 +172,13 @@ Dokumen ini memetakan fitur yang saat ini ada di project `dompet`, berdasarkan r
 - Jika log dipakai serius, pindahkan search/type filter ke server query.
 - Label export menjadi "Export halaman ini" atau ubah agar export semua hasil filter.
 
+**Keputusan Phase 3**
+
+- Search, filter tipe, filter tanggal, dan pagination Log memakai query params (`q`, `type`, `start`, `end`, `page`).
+- Search/filter dijalankan server-side agar berlaku ke seluruh dataset, bukan hanya page client.
+- Export CSV diputuskan menjadi semua hasil filter aktif via endpoint `/api/log/export`.
+- Empty state dibedakan antara belum ada transaksi dan filter tidak menghasilkan data.
+
 ### 7. Kategori
 
 **Yang ada**

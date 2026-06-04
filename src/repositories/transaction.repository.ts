@@ -2,9 +2,20 @@ import { prisma } from '@/lib/prisma';
 import { BaseRepository } from './base.repository';
 import type { Prisma, TransactionSource, TransactionType } from '@prisma/client';
 
+export type TransactionWithRelations = Prisma.TransactionGetPayload<{
+    include: { category: true; wallet: true };
+}>;
+
 class TransactionRepository extends BaseRepository<Prisma.TransactionDelegate> {
     constructor() {
         super(prisma.transaction);
+    }
+
+    async findUserTransactions(args: Omit<Prisma.TransactionFindManyArgs, 'include'>): Promise<TransactionWithRelations[]> {
+        return this.model.findMany({
+            ...args,
+            include: { category: true, wallet: true },
+        });
     }
 
     // Tambahkan query spesifik/kustom untuk Transaction di sini yang tidak tercover oleh BaseRepository
