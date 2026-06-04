@@ -9,8 +9,13 @@ class WalletRepository extends BaseRepository<Prisma.WalletDelegate> {
 
     async findUserWallets(userId: string) {
         return this.model.findMany({
-            where: { userId },
+            where: { userId, isArchived: false },
             orderBy: { createdAt: 'asc' },
+            include: {
+                _count: {
+                    select: { transactions: true }
+                }
+            }
         });
     }
 
@@ -34,6 +39,19 @@ class WalletRepository extends BaseRepository<Prisma.WalletDelegate> {
                     increment: incrementValue
                 }
             }
+        });
+    }
+
+    async countTransactions(id: string, userId: string) {
+        return prisma.transaction.count({
+            where: { walletId: id, userId },
+        });
+    }
+
+    async archive(id: string) {
+        return this.model.update({
+            where: { id },
+            data: { isArchived: true },
         });
     }
 }

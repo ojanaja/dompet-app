@@ -85,7 +85,7 @@ Tujuan: semua transaksi yang masuk bisa dipercaya, diedit, dan diaudit.
   - Area: `src/components/transaction/TransactionForm.tsx`, `src/services/transaction.service.ts`
   - Alasan: parsing input nominal manual perlu aman.
 
-- [ ] Rapikan tipe TypeScript transaksi agar tidak memakai `any`.
+- [x] Rapikan tipe TypeScript transaksi agar tidak memakai `any`.
   - Area: `src/components/transaction/TransactionForm.tsx`, `src/components/log/LogContent.tsx`, `src/components/chat/ChatPanel.tsx`
   - Alasan: mengurangi bug kontrak data.
 
@@ -93,31 +93,31 @@ Tujuan: semua transaksi yang masuk bisa dipercaya, diedit, dan diaudit.
 
 Tujuan: saldo wallet menjadi source of truth yang jelas dan tidak terasa magic.
 
-- [ ] Tentukan konsep saldo: saldo awal + mutasi transaksi + adjustment.
+- [x] Tentukan konsep saldo: saldo awal + mutasi transaksi + adjustment.
   - Area: product decision, `prisma/schema.prisma`
   - Output: keputusan tertulis di `FEATURE_LIST.md` atau README.
 
-- [ ] Tambahkan flow `Set Saldo Awal` untuk wallet baru.
+- [x] Tambahkan flow `Set Saldo Awal` untuk wallet baru.
   - Area: `src/components/settings/WalletSettings.tsx`
   - Alasan: saldo awal berbeda dari edit saldo aktual setelah transaksi berjalan.
 
-- [ ] Tambahkan flow `Adjustment Saldo` untuk wallet existing.
+- [x] Tambahkan flow `Adjustment Saldo` untuk wallet existing.
   - Area: `src/components/settings/WalletSettings.tsx`, `src/services/transaction.service.ts`
   - Alasan: edit saldo harus punya audit trail.
 
-- [ ] Buat kategori/system marker untuk adjustment transaction.
+- [x] Buat kategori/system marker untuk adjustment transaction.
   - Area: `prisma/schema.prisma`, `src/services/transaction.service.ts`
   - Alasan: adjustment perlu dibedakan dari income/expense biasa.
 
-- [ ] Tampilkan riwayat adjustment di Log.
+- [x] Tampilkan riwayat adjustment di Log.
   - Area: `src/components/log/LogContent.tsx`
   - Alasan: user bisa melihat kenapa saldo berubah.
 
-- [ ] Ubah delete wallet menjadi archive/nonaktif.
+- [x] Ubah delete wallet menjadi archive/nonaktif.
   - Area: `prisma/schema.prisma`, `src/components/settings/WalletSettings.tsx`, `src/services/wallet.service.ts`
   - Alasan: delete wallet bisa merusak histori transaksi.
 
-- [ ] Tampilkan jumlah transaksi terkait sebelum wallet dihapus/diarsipkan.
+- [x] Tampilkan jumlah transaksi terkait sebelum wallet dihapus/diarsipkan.
   - Area: `src/components/settings/WalletSettings.tsx`, `src/repositories/transaction.repository.ts`
   - Alasan: user paham dampak aksinya.
 

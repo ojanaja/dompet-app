@@ -86,6 +86,14 @@ enum TransactionType {
   EXPENSE
 }
 
+enum TransactionSource {
+  USER
+  AI
+  RECURRING
+  WALLET_INITIAL_BALANCE
+  WALLET_ADJUSTMENT
+}
+
 model Transaction {
   id         String          @id @default(cuid())
   userId     String
@@ -98,6 +106,7 @@ model Transaction {
   notes      String?
   date       DateTime        @default(now())
   metadata   Json? // Untuk menyimpan raw response parsing AI / struk OCR
+  source     TransactionSource @default(USER)
   currency   String          @default("IDR")
   tags       String[]        @default([])
 
@@ -158,6 +167,7 @@ model Wallet {
   userId      String
   name        String
   balance     Float         @default(0)
+  isArchived  Boolean       @default(false)
   icon        String?       // Emoji or icon name
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt

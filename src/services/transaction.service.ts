@@ -3,9 +3,8 @@ import { categoryRepository } from '@/repositories/category.repository';
 import { budgetRepository } from '@/repositories/budget.repository';
 import { debtRepository } from '@/repositories/debt.repository';
 import { walletRepository } from '@/repositories/wallet.repository';
-import { WalletService } from './wallet.service';
 import { AIService } from './ai.service';
-import type { CategoryType, Prisma } from '@prisma/client';
+import type { CategoryType, Prisma, TransactionSource, TransactionType } from '@prisma/client';
 
 type TransactionMetadata = {
     categorySuggested?: CategoryType;
@@ -47,6 +46,9 @@ export class TransactionService {
         const transaction = await transactionRepository.findById(transactionId);
         if (!transaction || transaction.userId !== userId) {
             throw new Error("Transaction not found or unauthorized");
+        }
+        if (transaction.source === 'WALLET_INITIAL_BALANCE' || transaction.source === 'WALLET_ADJUSTMENT') {
+            throw new Error("Adjustment saldo tidak bisa dihapus dari Log");
         }
 
         // Revert wallet balance
@@ -97,7 +99,8 @@ export class TransactionService {
         // 1.5 Handle Wallet
         let walletId = data.walletId;
         if (!walletId) {
-            const defaultWallet = await WalletService.createDefaultWalletIfNone(data.userId);
+            const wallets = await walletRepository.findUserWallets(data.userId);
+            const defaultWallet = wallets[0] || await walletRepository.createDefaultWallet(data.userId);
             walletId = defaultWallet.id;
         }
 
@@ -172,6 +175,23 @@ export class TransactionService {
             aiFeedback
         };
     }
+
+    static async createSystemWalletAdjustment(data: {
+        userId: string;
+        walletId: string;
+        amount: number;
+        type: TransactionType;
+        title: string;
+        notes: string;
+        source: Extract<TransactionSource, 'WALLET_INITIAL_BALANCE' | 'WALLET_ADJUSTMENT'>;
+    }) {
+        if (typeof data.amount !== 'number' || !Number.isFinite(data.amount) || data.amount <= 0) {
+            throw new Error("Amount must be greater than 0");
+        }
+
+        return transactionRepository.createWalletAdjustment(data);
+    }
+
     /**
      * Memperbarui transaksi manual
      */
@@ -181,6 +201,9 @@ export class TransactionService {
         const transaction = await transactionRepository.findById(transactionId);
         if (!transaction || transaction.userId !== userId) {
             throw new Error("Transaction not found or unauthorized");
+        }
+        if (transaction.source === 'WALLET_INITIAL_BALANCE' || transaction.source === 'WALLET_ADJUSTMENT') {
+            throw new Error("Adjustment saldo tidak bisa diedit dari Log");
         }
 
         // Revert old wallet balance

@@ -11,19 +11,37 @@ import { fetchUserWalletsAction } from '@/actions/wallet.actions';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { BottomSheet } from '@/components/ui/BottomSheet';
 import { TransactionForm } from '@/components/transaction/TransactionForm';
+import type { CategoryType, TransactionSource, TransactionType } from '@prisma/client';
+
+interface Category {
+    id: string;
+    name: string;
+    type: CategoryType;
+}
+
+interface Wallet {
+    id: string;
+    name: string;
+}
 
 interface Transaction {
     id: string;
     title: string;
     amount: number;
-    type: string;
+    type: TransactionType;
     date: string | Date;
     notes: string | null;
-    metadata: any;
+    metadata: {
+        isDebt?: boolean;
+        debtorName?: string;
+        system?: string;
+        reason?: string;
+    } | null;
+    source: TransactionSource;
     category: {
         id: string;
         name: string;
-        type: string;
+        type: CategoryType;
     } | null;
     wallet: {
         id: string;
@@ -39,6 +57,8 @@ interface LogContentProps {
 
 type FilterType = 'ALL' | 'EXPENSE' | 'INCOME';
 
+const walletAdjustmentSources: TransactionSource[] = ['WALLET_INITIAL_BALANCE', 'WALLET_ADJUSTMENT'];
+
 export function LogContent({ transactions, currentPage, hasMore }: LogContentProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -49,8 +69,8 @@ export function LogContent({ transactions, currentPage, hasMore }: LogContentPro
     const [expandedId, setExpandedId] = useState<string | null>(null);
     const [isDeleting, setIsDeleting] = useState<string | null>(null);
     const [editTx, setEditTx] = useState<Transaction | null>(null);
-    const [categories, setCategories] = useState<any[]>([]);
-    const [wallets, setWallets] = useState<any[]>([]);
+    const [categories, setCategories] = useState<Category[]>([]);
+    const [wallets, setWallets] = useState<Wallet[]>([]);
 
     const [startDate, setStartDate] = useState(searchParams.get('start') || '');
     const [endDate, setEndDate] = useState(searchParams.get('end') || '');
@@ -94,6 +114,8 @@ export function LogContent({ transactions, currentPage, hasMore }: LogContentPro
             setExpandedId(null);
         }
     };
+
+    const isWalletAdjustment = (tx: Transaction) => walletAdjustmentSources.includes(tx.source);
 
     const handlePageChange = (newPage: number) => {
         const params = new URLSearchParams(searchParams);
@@ -244,6 +266,11 @@ export function LogContent({ transactions, currentPage, hasMore }: LogContentPro
                                                         {tx.category.name}
                                                     </span>
                                                 )}
+                                                {isWalletAdjustment(tx) && (
+                                                    <span className="text-[10px] text-muted-foreground bg-border-subtle px-1.5 py-0.5 rounded">
+                                                        Adjustment
+                                                    </span>
+                                                )}
                                                 <span className="text-[11px] text-muted-foreground">· {formatTime(tx.date)}</span>
                                             </div>
                                         </div>
@@ -282,26 +309,28 @@ export function LogContent({ transactions, currentPage, hasMore }: LogContentPro
                                                         </p>
                                                     )}
                                                 </div>
-                                                <div className="flex items-center gap-2">
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            setEditTx(tx as any);
-                                                        }}
-                                                        className="p-1.5 rounded-md hover:bg-card-hover text-muted-foreground transition-colors"
-                                                        title="Edit transaksi"
-                                                    >
-                                                        <Edit2 className="w-4 h-4" />
-                                                    </button>
-                                                    <button
-                                                        onClick={(e) => handleDelete(e, tx.id)}
-                                                        disabled={isDeleting === tx.id}
-                                                        className="p-1.5 rounded-md hover:bg-danger/10 text-danger transition-colors disabled:opacity-50"
-                                                        title="Hapus transaksi"
-                                                    >
-                                                        {isDeleting === tx.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
-                                                    </button>
-                                                </div>
+                                                {!isWalletAdjustment(tx) && (
+                                                    <div className="flex items-center gap-2">
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setEditTx(tx);
+                                                            }}
+                                                            className="p-1.5 rounded-md hover:bg-card-hover text-muted-foreground transition-colors"
+                                                            title="Edit transaksi"
+                                                        >
+                                                            <Edit2 className="w-4 h-4" />
+                                                        </button>
+                                                        <button
+                                                            onClick={(e) => handleDelete(e, tx.id)}
+                                                            disabled={isDeleting === tx.id}
+                                                            className="p-1.5 rounded-md hover:bg-danger/10 text-danger transition-colors disabled:opacity-50"
+                                                            title="Hapus transaksi"
+                                                        >
+                                                            {isDeleting === tx.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                                                        </button>
+                                                    </div>
+                                                )}
                                             </div>
                                         </motion.div>
                                     )}
@@ -359,7 +388,7 @@ export function LogContent({ transactions, currentPage, hasMore }: LogContentPro
                             id: editTx.id,
                             title: editTx.title,
                             amount: editTx.amount,
-                            type: editTx.type as any,
+                            type: editTx.type,
                             categoryId: editTx.category?.id || null,
                             walletId: editTx.wallet?.id || null,
                             date: editTx.date,

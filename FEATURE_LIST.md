@@ -115,6 +115,14 @@ Dokumen ini memetakan fitur yang saat ini ada di project `dompet`, berdasarkan r
 - Tambahkan konsep "adjustment transaction" atau "set saldo awal" agar perubahan saldo tidak terasa magic.
 - Jelaskan di UI bahwa saldo wallet adalah saldo aktual, bukan saldo per bulan.
 
+**Keputusan Phase 2**
+
+- Saldo wallet adalah source of truth saldo aktual.
+- Wallet baru memakai `Set Saldo Awal`; nominal awal dicatat sebagai transaksi sistem `WALLET_INITIAL_BALANCE`.
+- Wallet existing memakai `Adjustment Saldo`; selisih saldo dicatat sebagai transaksi sistem `WALLET_ADJUSTMENT`.
+- Transaksi sistem adjustment tampil di Log sebagai riwayat audit dan tidak diedit/dihapus dari Log.
+- Delete wallet diganti menjadi archive/nonaktif supaya histori transaksi tetap menyimpan referensi dompet.
+
 ### 5. Dashboard
 
 **Yang ada**

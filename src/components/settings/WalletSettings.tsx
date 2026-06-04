@@ -2,17 +2,23 @@
 
 import { useState, useEffect } from 'react';
 import { GlassCard } from '@/components/layout/GlassCard';
-import { Plus, Edit2, Trash2, Loader2, Wallet as WalletIcon } from 'lucide-react';
+import { Plus, Edit2, Archive, Loader2, Wallet as WalletIcon } from 'lucide-react';
 import { BottomSheet } from '@/components/ui/BottomSheet';
-import { fetchUserWalletsAction, createWalletAction, updateWalletAction, deleteWalletAction } from '@/actions/wallet.actions';
+import { fetchUserWalletsAction, createWalletAction, updateWalletAction, deleteWalletAction, countWalletTransactionsAction } from '@/actions/wallet.actions';
 import { formatRupiah } from '@/lib/format';
 import type { Wallet } from '@prisma/client';
 
+type WalletWithCount = Wallet & {
+    _count?: {
+        transactions: number;
+    };
+};
+
 export function WalletSettings() {
-    const [wallets, setWallets] = useState<Wallet[]>([]);
+    const [wallets, setWallets] = useState<WalletWithCount[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isFormOpen, setIsFormOpen] = useState(false);
-    const [editingWallet, setEditingWallet] = useState<Wallet | null>(null);
+    const [editingWallet, setEditingWallet] = useState<WalletWithCount | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     // Form states
@@ -52,7 +58,7 @@ export function WalletSettings() {
         setIsFormOpen(true);
     };
 
-    const handleOpenEdit = (w: Wallet) => {
+    const handleOpenEdit = (w: WalletWithCount) => {
         setEditingWallet(w);
         setName(w.name);
         setBalance(w.balance.toLocaleString('id-ID'));
@@ -85,7 +91,10 @@ export function WalletSettings() {
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm('Hapus dompet ini? Transaksi yang terkait akan kehilangan referensi dompet.')) return;
+        const countResult = await countWalletTransactionsAction(id);
+        const txCount = countResult.success && typeof countResult.data === 'number' ? countResult.data : null;
+        const countText = txCount === null ? '' : ` Dompet ini punya ${txCount} transaksi terkait.`;
+        if (!confirm(`Arsipkan dompet ini?${countText} Histori transaksi tetap tersimpan, tapi dompet tidak muncul lagi untuk transaksi baru.`)) return;
         setIsSubmitting(true);
         try {
             await deleteWalletAction(id);
@@ -114,6 +123,7 @@ export function WalletSettings() {
             </div>
             <p className="text-xs text-muted-foreground mb-3">
                 Saldo dompet adalah saldo aktual saat ini, bukan saldo per bulan.
+                Saldo awal dan adjustment akan dicatat di Log.
             </p>
             
             <GlassCard className="divide-y divide-border-subtle">
@@ -144,7 +154,7 @@ export function WalletSettings() {
                                     disabled={isSubmitting}
                                     className="p-1.5 text-muted hover:text-danger hover:bg-danger/10 rounded transition-colors disabled:opacity-50"
                                 >
-                                    <Trash2 className="w-3.5 h-3.5" />
+                                    <Archive className="w-3.5 h-3.5" />
                                 </button>
                             </div>
                         </div>
@@ -173,7 +183,7 @@ export function WalletSettings() {
                     </div>
                     <div>
                         <label className="block text-[10px] text-muted-foreground uppercase tracking-widest font-mono mb-1.5">
-                            Saldo *
+                            {editingWallet ? 'Adjustment Saldo *' : 'Set Saldo Awal *'}
                         </label>
                         <div className="relative">
                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
@@ -189,6 +199,11 @@ export function WalletSettings() {
                                 className="w-full bg-card border border-border rounded-lg pl-9 pr-3 py-2.5 text-sm text-foreground focus:outline-none focus:border-foreground transition-colors"
                             />
                         </div>
+                        <p className="text-[11px] text-muted-foreground mt-1.5">
+                            {editingWallet
+                                ? 'Ubah nominal hanya saat saldo aktual berbeda. Selisihnya akan masuk Log sebagai adjustment.'
+                                : 'Nominal ini dicatat sebagai saldo awal dompet.'}
+                        </p>
                     </div>
                     
                     <button

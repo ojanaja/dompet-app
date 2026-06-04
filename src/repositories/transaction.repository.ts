@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { BaseRepository } from './base.repository';
-import type { Prisma } from '@prisma/client';
+import type { Prisma, TransactionSource, TransactionType } from '@prisma/client';
 
 class TransactionRepository extends BaseRepository<Prisma.TransactionDelegate> {
     constructor() {
@@ -24,6 +24,46 @@ class TransactionRepository extends BaseRepository<Prisma.TransactionDelegate> {
             orderBy: {
                 date: 'desc',
             },
+        });
+    }
+
+    async createWalletAdjustment(data: {
+        userId: string;
+        walletId: string;
+        amount: number;
+        type: TransactionType;
+        title: string;
+        notes: string;
+        source: Extract<TransactionSource, 'WALLET_INITIAL_BALANCE' | 'WALLET_ADJUSTMENT'>;
+    }) {
+        return prisma.$transaction(async (tx) => {
+            const transaction = await tx.transaction.create({
+                data: {
+                    userId: data.userId,
+                    walletId: data.walletId,
+                    amount: data.amount,
+                    type: data.type,
+                    title: data.title,
+                    notes: data.notes,
+                    source: data.source,
+                    date: new Date(),
+                    metadata: {
+                        system: 'wallet_balance',
+                        reason: data.source,
+                    } satisfies Prisma.InputJsonObject,
+                },
+            });
+
+            await tx.wallet.update({
+                where: { id: data.walletId },
+                data: {
+                    balance: {
+                        increment: data.type === 'INCOME' ? data.amount : -data.amount,
+                    },
+                },
+            });
+
+            return transaction;
         });
     }
 }
