@@ -224,29 +224,29 @@ Tujuan: budget menjadi fitur bulanan yang jelas dan bisa dikelola.
 
 Tujuan: kategori menjadi struktur yang cocok untuk multi-user dan AI.
 
-- [ ] Putuskan kategori global atau per user.
+- [x] Putuskan kategori global atau per user.
   - Area: product decision, `prisma/schema.prisma`
   - Alasan: schema sekarang `Category.name` unique global.
 
-- [ ] Jika kategori per user, tambah `userId` pada Category.
+- [x] Jika kategori per user, tambah `userId` pada Category.
   - Area: `prisma/schema.prisma`, migration
   - Alasan: user berbeda bisa punya kategori dengan nama sama.
 
-- [ ] Update repository/service kategori untuk scope user.
+- [x] Update repository/service kategori untuk scope user.
   - Area: `src/repositories/category.repository.ts`, `src/services/category.service.ts`, `src/actions/core.actions.ts`
   - Alasan: data isolation.
 
-- [ ] Update seed kategori default.
+- [x] Update seed kategori default.
   - Area: `prisma/seed.ts`
   - Alasan: default category harus tetap ada.
 
-- [ ] Putuskan nasib `PROJECT`.
+- [x] Putuskan nasib `PROJECT`.
   - Area: product decision
   - Opsi A: pertahankan sebagai kategori biasa.
   - Opsi B: buat project tracking.
   - Opsi C: hapus dari prompt AI dan dropdown.
 
-- [ ] Jika `PROJECT` tetap ada, perjelas label dan penggunaannya.
+- [x] Jika `PROJECT` tetap ada, perjelas label dan penggunaannya.
   - Area: `src/components/settings/CategorySettings.tsx`, `src/services/ai.service.ts`
   - Alasan: tidak terasa fitur menggantung.
 

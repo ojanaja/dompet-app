@@ -8,7 +8,7 @@ export const TransactionSchema = z.object({
     amount: z.number().positive().describe("Total nilai uang (angka positif)"),
     title: z.string().describe("Judul transaksi yang singkat namun jelas"),
     type: z.enum(['INCOME', 'EXPENSE']).describe("Apakah ini pemasukan atau pengeluaran?"),
-    categorySuggested: z.enum(['ESSENTIAL', 'LIFESTYLE', 'INCOME', 'PROJECT']).describe("Saran kategori: ESSENTIAL (makan, transport), LIFESTYLE (kopi, game), INCOME (pendapatan), PROJECT (bisnis)"),
+    categorySuggested: z.enum(['ESSENTIAL', 'LIFESTYLE', 'INCOME', 'PROJECT']).describe("Saran kategori: ESSENTIAL (makan, transport), LIFESTYLE (kopi, game), INCOME (pendapatan), PROJECT (proyek/bisnis sebagai kategori transaksi biasa)"),
     notes: z.string().optional().describe("Catatan/konteks tambahan jika ada"),
     isDebt: z.boolean().default(false).describe("Apakah ini transaksi utang atau piutang? (e.g. 'Pinjam 50rb', 'Bayarin makan teman')"),
     debtorName: z.string().optional().describe("Nama orang yang berurusan (jika ini utang/piutang)"),
@@ -32,6 +32,7 @@ Catatan:
 - Pastikan ekstraksi 'amount' berbentuk angka bulat, contoh "50k" -> 50000.
 - Deteksi Utang/Piutang: Jika pengguna menyebutkan "pinjam", "ngutang", "bayarin [nama]", "dipinjem [nama]", set isDebt: true dan ekstrak debtorName.
 - Pahami konteks pengguna. Contoh: "Beli starbucks 50rb" -> EXPENSE, kategori: LIFESTYLE. "Bayar kos 2jt" -> EXPENSE, kategori: ESSENTIAL.
+- Gunakan PROJECT hanya untuk transaksi proyek/bisnis/freelance. PROJECT bukan fitur project tracking, hanya kategori biasa.
 - Jangan pernah salah mengklasifikasikan LIFESTYLE vs ESSENTIAL.`,
             prompt: `Ekstrak transaksi dari pesan ini: "${message}"`,
         });
@@ -81,6 +82,7 @@ Catatan:
 - Pastikan ekstraksi 'amount' berbentuk angka bulat, contoh "50.000" -> 50000, "Rp 100k" -> 100000.
 - Deteksi Utang/Piutang: Jika ada teks "pinjam", "utang", "bayar ke [nama]", "dari [nama]", set isDebt: true dan ekstrak debtorName.
 - Pahami konteks: struk supermarket biasanya EXPENSE kategori ESSENTIAL, struk restoran bisa LIFESTYLE atau ESSENTIAL tergantung konteks.
+- Gunakan PROJECT hanya untuk transaksi proyek/bisnis/freelance. PROJECT bukan fitur project tracking, hanya kategori biasa.
 - Jika tidak bisa mendeteksi dengan pasti, berikan nilai default yang reasonable.`,
             messages: [
                 {

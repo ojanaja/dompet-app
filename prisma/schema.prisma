@@ -20,6 +20,7 @@ model User {
   sessions         Session[]
   transactions     Transaction[]
   budgets          Budget[]
+  categories       Category[]
   debts            Debt[]
   pushSubscriptions PushSubscription[]
   wallets          Wallet[]
@@ -72,13 +73,17 @@ enum CategoryType {
 
 model Category {
   id           String        @id @default(cuid())
-  name         String        @unique
+  userId       String
+  name         String
   type         CategoryType
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   transactions Transaction[]
   budgets      Budget[]
   recurringTransactions RecurringTransaction[]
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
+
+  @@unique([userId, name])
 }
 
 enum TransactionType {

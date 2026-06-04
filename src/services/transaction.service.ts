@@ -102,7 +102,7 @@ export class TransactionService {
             const suggestedType = metadata.categorySuggested || 'ESSENTIAL';
 
             // Cari category yang sesuai dengan type
-            const existingCategories = await categoryRepository.findByType(suggestedType);
+            const existingCategories = await categoryRepository.findByType(data.userId, suggestedType);
 
             if (existingCategories.length > 0) {
                 categoryId = existingCategories[0].id;
@@ -111,7 +111,8 @@ export class TransactionService {
                 // Auto create category jika belum ada
                 const newCat = await categoryRepository.create({
                     name: suggestedType,
-                    type: suggestedType
+                    type: suggestedType,
+                    userId: data.userId,
                 });
                 categoryId = newCat.id;
                 categoryType = newCat.type;

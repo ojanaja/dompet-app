@@ -1,26 +1,28 @@
 import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
+import { DEFAULT_CATEGORIES } from '../src/lib/category-defaults';
 
 async function main() {
   const prisma = new PrismaClient();
 
   console.log('🌱 Seeding database...');
 
-  // Seed default categories (shared across all users)
-  const categories = [
-    { name: 'Kebutuhan Pokok', type: 'ESSENTIAL' as const },
-    { name: 'Gaya Hidup', type: 'LIFESTYLE' as const },
-    { name: 'Pendapatan', type: 'INCOME' as const },
-    { name: 'Proyek & Bisnis', type: 'PROJECT' as const },
-  ];
+  const users = await prisma.user.findMany({ select: { id: true, email: true } });
 
-  for (const cat of categories) {
-    await prisma.category.upsert({
-      where: { name: cat.name },
-      update: { type: cat.type },
-      create: { name: cat.name, type: cat.type },
-    });
-    console.log(`✅ Category: ${cat.name} [${cat.type}]`);
+  for (const user of users) {
+    for (const category of DEFAULT_CATEGORIES) {
+      await prisma.category.upsert({
+        where: {
+          userId_name: {
+            userId: user.id,
+            name: category.name,
+          },
+        },
+        update: { type: category.type },
+        create: { ...category, userId: user.id },
+      });
+      console.log(`✅ Category: ${category.name} [${category.type}] for ${user.email}`);
+    }
   }
 
   console.log('🎉 Seeding complete!');

@@ -207,6 +207,13 @@ Dokumen ini memetakan fitur yang saat ini ada di project `dompet`, berdasarkan r
 - Pertimbangkan kategori per user.
 - Jika `PROJECT` belum punya fungsi khusus, perlakukan sebagai kategori biasa atau hilangkan dari narasi fitur.
 
+**Keputusan Phase 6**
+
+- Kategori diputuskan per-user. `Category.userId` menjadi bagian dari scope data dan nama kategori unik per user.
+- Migration menyalin kategori lama ke masing-masing user dan me-relink transaksi, budget, dan recurring transaction.
+- User baru otomatis mendapat kategori default saat kategori pertama kali dimuat.
+- `PROJECT` dipertahankan sebagai kategori biasa untuk proyek/bisnis/freelance, bukan project tracking penuh.
+
 ### 8. Budget Bulanan
 
 **Yang ada**

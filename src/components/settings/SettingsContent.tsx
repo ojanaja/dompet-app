@@ -11,10 +11,11 @@ import { BudgetSettings } from './BudgetSettings';
 import { CategorySettings } from './CategorySettings';
 import { WalletSettings } from './WalletSettings';
 import { RecurringSettings } from './RecurringSettings';
+import type { CategoryType } from '@prisma/client';
 
 interface SettingsContentProps {
     user: { id: string; name: string | null; email: string };
-    categories: Array<{ id: string; name: string; type: string }>;
+    categories: Array<{ id: string; name: string; type: CategoryType }>;
     debts: Array<{
         id: string;
         debtorName: string;
@@ -29,7 +30,7 @@ interface SettingsContentProps {
         category: {
             id: string;
             name: string;
-            type: string;
+            type: CategoryType;
         };
     }>;
     budgetMonth: number;

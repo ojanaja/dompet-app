@@ -10,20 +10,20 @@ import { unstable_cache } from 'next/cache';
 import { CACHE_TAGS, CACHE_TTL } from '@/lib/cache';
 import type { Prisma } from '@prisma/client';
 
-// Cached: kategori jarang berubah, aman di-cache 1 jam
-const getCachedCategories = unstable_cache(
-  () => CategoryService.getAllCategories(),
-  ['all-categories'],
-  { tags: [CACHE_TAGS.CATEGORIES], revalidate: CACHE_TTL.LONG }
-);
-
 export async function fetchCategoriesAction() {
+  const user = await getDefaultUser();
+  const getCachedCategories = unstable_cache(
+    () => CategoryService.getUserCategories(user.id),
+    [`categories-${user.id}`],
+    { tags: [CACHE_TAGS.CATEGORIES, `categories-${user.id}`], revalidate: CACHE_TTL.LONG }
+  );
   return withActionHandler(() => getCachedCategories());
 }
 
-export async function createCategoryAction(data: Prisma.CategoryCreateInput, pathToRevalidate: string = '/') {
+export async function createCategoryAction(data: Omit<Prisma.CategoryUncheckedCreateInput, 'userId'>, pathToRevalidate: string = '/') {
+  const user = await getDefaultUser();
   return withActionHandler(async () => {
-    const result = await CategoryService.createCategory(data);
+    const result = await CategoryService.createCategory(user.id, data);
     updateTag(CACHE_TAGS.CATEGORIES);
     revalidatePath(pathToRevalidate);
     return result;
@@ -31,18 +31,22 @@ export async function createCategoryAction(data: Prisma.CategoryCreateInput, pat
 }
 
 export async function updateCategoryAction(id: string, data: Prisma.CategoryUpdateInput, pathToRevalidate: string = '/') {
+  const user = await getDefaultUser();
   return withActionHandler(async () => {
-    const result = await CategoryService.updateCategory(id, data);
+    const result = await CategoryService.updateCategory(id, user.id, data);
     updateTag(CACHE_TAGS.CATEGORIES);
+    updateTag(CACHE_TAGS.DASHBOARD);
     revalidatePath(pathToRevalidate);
     return result;
   });
 }
 
 export async function deleteCategoryAction(id: string, pathToRevalidate: string = '/') {
+  const user = await getDefaultUser();
   return withActionHandler(async () => {
-    const result = await CategoryService.deleteCategory(id);
+    const result = await CategoryService.deleteCategory(id, user.id);
     updateTag(CACHE_TAGS.CATEGORIES);
+    updateTag(CACHE_TAGS.DASHBOARD);
     revalidatePath(pathToRevalidate);
     return result;
   });

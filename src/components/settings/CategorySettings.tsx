@@ -1,15 +1,16 @@
 'use client';
 
 import { useState } from 'react';
-import { Tag, Plus, Edit2, Trash2, Loader2, X } from 'lucide-react';
+import { Plus, Edit2, Trash2, Loader2 } from 'lucide-react';
 import { BottomSheet } from '@/components/ui/BottomSheet';
 import { createCategoryAction, updateCategoryAction, deleteCategoryAction } from '@/actions/core.actions';
 import { useRouter } from 'next/navigation';
+import type { CategoryType } from '@prisma/client';
 
 interface Category {
     id: string;
     name: string;
-    type: string;
+    type: CategoryType;
 }
 
 export function CategorySettings({ initialCategories }: { initialCategories: Category[] }) {
@@ -19,14 +20,14 @@ export function CategorySettings({ initialCategories }: { initialCategories: Cat
     
     // Form state
     const [name, setName] = useState('');
-    const [type, setType] = useState('EXPENSE');
+    const [type, setType] = useState<CategoryType>('ESSENTIAL');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
     const openCreate = () => {
         setEditCat(null);
         setName('');
-        setType('EXPENSE');
+        setType('ESSENTIAL');
         setError('');
         setIsOpen(true);
     };
@@ -51,9 +52,9 @@ export function CategorySettings({ initialCategories }: { initialCategories: Cat
         try {
             let res;
             if (editCat) {
-                res = await updateCategoryAction(editCat.id, { name, type: type as any }, '/settings');
+                res = await updateCategoryAction(editCat.id, { name, type }, '/settings');
             } else {
-                res = await createCategoryAction({ name, type: type as any }, '/settings');
+                res = await createCategoryAction({ name, type }, '/settings');
             }
 
             if (res.success) {
@@ -62,8 +63,9 @@ export function CategorySettings({ initialCategories }: { initialCategories: Cat
             } else {
                 setError(res.error || 'Terjadi kesalahan sistem');
             }
-        } catch (err: any) {
-            setError(err.message || 'Terjadi kesalahan sistem');
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : 'Terjadi kesalahan sistem';
+            setError(message);
         } finally {
             setLoading(false);
         }
@@ -79,7 +81,7 @@ export function CategorySettings({ initialCategories }: { initialCategories: Cat
             } else {
                 alert(res.error || 'Gagal menghapus');
             }
-        } catch (err: any) {
+        } catch {
             alert('Gagal menghapus');
         }
     };
@@ -145,14 +147,17 @@ export function CategorySettings({ initialCategories }: { initialCategories: Cat
                         </label>
                         <select
                             value={type}
-                            onChange={(e) => setType(e.target.value)}
+                            onChange={(e) => setType(e.target.value as CategoryType)}
                             className="w-full bg-card border border-border rounded-lg px-3 py-2.5 text-sm text-foreground focus:outline-none focus:border-foreground transition-colors appearance-none"
                         >
                             <option value="ESSENTIAL">Kebutuhan Pokok</option>
                             <option value="LIFESTYLE">Gaya Hidup</option>
                             <option value="INCOME">Pendapatan</option>
-                            <option value="PROJECT">Proyek / Bisnis</option>
+                            <option value="PROJECT">Proyek / Bisnis (kategori biasa)</option>
                         </select>
+                        <p className="text-[11px] text-muted-foreground mt-1.5">
+                            Proyek/Bisnis dipakai sebagai kategori transaksi biasa, bukan project tracking.
+                        </p>
                     </div>
 
                     {error && (
