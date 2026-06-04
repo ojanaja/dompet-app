@@ -15,8 +15,9 @@ interface ExpenseDonutChartProps {
 export function ExpenseDonutChart({ data }: ExpenseDonutChartProps) {
   if (data.length === 0) {
     return (
-      <div className="w-full h-48 flex items-center justify-center text-muted text-sm">
-        <p>Belum ada data pengeluaran</p>
+      <div className="w-full h-48 flex flex-col items-center justify-center text-center">
+        <p className="text-muted text-sm">Belum ada pengeluaran bulan ini</p>
+        <p className="text-muted-foreground text-xs mt-1">Distribusi akan muncul setelah ada transaksi keluar.</p>
       </div>
     );
   }
@@ -40,7 +41,7 @@ export function ExpenseDonutChart({ data }: ExpenseDonutChartProps) {
             ))}
           </Pie>
           <Tooltip
-            formatter={(value: any) => `Rp${Number(value).toLocaleString('id-ID')}`}
+            formatter={(value) => `Rp${Number(value ?? 0).toLocaleString('id-ID')}`}
             contentStyle={{
               borderRadius: '0.5rem',
               border: '1px solid #333',

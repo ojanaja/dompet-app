@@ -18,6 +18,7 @@ export default async function DashboardPage(props: DashboardPageProps) {
         data={result.success ? result.data! : null} 
         currentMonth={month ?? new Date().getMonth() + 1}
         currentYear={year ?? new Date().getFullYear()}
+        errorMessage={result.success ? undefined : result.error}
       />
     </div>
   );

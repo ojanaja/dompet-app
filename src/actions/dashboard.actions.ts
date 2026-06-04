@@ -11,6 +11,7 @@ import { CACHE_TAGS, CACHE_TTL } from '@/lib/cache';
 export type DashboardData = {
     totalExpense: number;
     totalIncome: number;
+    netIncome: number;
     totalBalance: number;
     categoryBreakdown: Array<{
         name: string;
@@ -46,11 +47,22 @@ export type DashboardData = {
 };
 
 const CATEGORY_COLORS: Record<string, string> = {
-    ESSENTIAL: '#ffffff',
-    LIFESTYLE: '#888888',
-    PROJECT: '#555555',
-    INCOME: '#cccccc',
+    ESSENTIAL: '#e5e7eb',
+    LIFESTYLE: '#9ca3af',
+    PROJECT: '#60a5fa',
+    INCOME: '#34d399',
 };
+
+const CATEGORY_NAME_COLORS = [
+    '#f8fafc',
+    '#93c5fd',
+    '#34d399',
+    '#fbbf24',
+    '#f87171',
+    '#c4b5fd',
+    '#2dd4bf',
+    '#fb7185',
+];
 
 export async function fetchDashboardDataAction(month?: number, year?: number) {
     const user = await getDefaultUser();
@@ -77,27 +89,29 @@ export async function fetchDashboardDataAction(month?: number, year?: number) {
             const totalIncome = transactions
                 .filter(t => t.type === 'INCOME')
                 .reduce((sum, t) => sum + t.amount, 0);
+
+            const netIncome = totalIncome - totalExpense;
             
             const totalBalance = wallets.reduce((sum, wallet) => sum + wallet.balance, 0);
 
-            // Group expenses by category type
+            // Group expenses by category name for practical insight.
             const categoryMap = new Map<string, { name: string; type: string; total: number }>();
             transactions
                 .filter(t => t.type === 'EXPENSE')
                 .forEach(t => {
-                    const catType = t.category?.type || 'ESSENTIAL';
+                    const catType = t.category?.type || 'LIFESTYLE';
                     const catName = t.category?.name || 'Lainnya';
-                    const existing = categoryMap.get(catType);
+                    const existing = categoryMap.get(catName);
                     if (existing) {
                         existing.total += t.amount;
                     } else {
-                        categoryMap.set(catType, { name: catName, type: catType, total: t.amount });
+                        categoryMap.set(catName, { name: catName, type: catType, total: t.amount });
                     }
                 });
 
-            const categoryBreakdown = Array.from(categoryMap.values()).map(cat => ({
+            const categoryBreakdown = Array.from(categoryMap.values()).map((cat, index) => ({
                 ...cat,
-                color: CATEGORY_COLORS[cat.type] || '#94a3b8',
+                color: CATEGORY_NAME_COLORS[index % CATEGORY_NAME_COLORS.length] || CATEGORY_COLORS[cat.type] || '#94a3b8',
             }));
 
             const recentTransactions = transactions.slice(0, 5).map(t => ({
@@ -148,14 +162,16 @@ export async function fetchDashboardDataAction(month?: number, year?: number) {
                     }
                 });
 
+            let cumulativeSpending = 0;
             const spendingTrend = Array.from(trendMap.entries()).map(([date, amount]) => ({
                 date,
-                amount
+                amount: cumulativeSpending += amount
             }));
 
             return {
                 totalExpense,
                 totalIncome,
+                netIncome,
                 totalBalance,
                 categoryBreakdown,
                 recentTransactions,

@@ -14,8 +14,9 @@ interface SpendingTrendChartProps {
 export function SpendingTrendChart({ data }: SpendingTrendChartProps) {
   if (data.length === 0) {
     return (
-      <div className="w-full h-48 flex items-center justify-center text-muted text-sm">
-        <p>Belum ada data tren</p>
+      <div className="w-full h-48 flex flex-col items-center justify-center text-center">
+        <p className="text-muted text-sm">Belum ada tren pengeluaran</p>
+        <p className="text-muted-foreground text-xs mt-1">Grafik akan terisi setelah ada transaksi keluar.</p>
       </div>
     );
   }
@@ -38,7 +39,7 @@ export function SpendingTrendChart({ data }: SpendingTrendChartProps) {
             tickFormatter={(value) => `Rp${(value / 1000).toFixed(0)}k`}
           />
           <Tooltip
-            formatter={(value: any) => `Rp${Number(value).toLocaleString('id-ID')}`}
+            formatter={(value) => `Rp${Number(value ?? 0).toLocaleString('id-ID')}`}
             labelStyle={{ color: '#888', marginBottom: '4px' }}
             contentStyle={{
               borderRadius: '0.5rem',

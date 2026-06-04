@@ -148,6 +148,14 @@ Dokumen ini memetakan fitur yang saat ini ada di project `dompet`, berdasarkan r
 - Gunakan section title seperti "Saldo Saat Ini" dan "Ringkasan Juni 2026".
 - Pertimbangkan chart kategori by category name untuk insight yang lebih berguna.
 
+**Keputusan Phase 4**
+
+- Dashboard memisahkan area `Saldo Aktual` dari `Ringkasan [Bulan Tahun]`.
+- Ringkasan bulanan menampilkan `Masuk`, `Keluar`, dan `Net`.
+- Chart distribusi pengeluaran memakai nama kategori, bukan hanya `CategoryType`.
+- Tren pengeluaran adalah akumulasi harian dalam bulan terpilih.
+- Empty, loading, dan error state dibuat lebih eksplisit.
+
 ### 6. Log Transaksi
 
 **Yang ada**

@@ -12,6 +12,7 @@ interface DashboardContentProps {
     data: DashboardData | null;
     currentMonth: number;
     currentYear: number;
+    errorMessage?: string;
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -21,15 +22,7 @@ const CATEGORY_LABELS: Record<string, string> = {
     INCOME: 'Pendapatan',
 };
 
-// Monochrome palette for chart segments
-const MONO_COLORS: Record<string, string> = {
-    ESSENTIAL: '#ffffff',
-    LIFESTYLE: '#888888',
-    PROJECT: '#555555',
-    INCOME: '#cccccc',
-};
-
-export function DashboardContent({ data, currentMonth, currentYear }: DashboardContentProps) {
+export function DashboardContent({ data, currentMonth, currentYear, errorMessage }: DashboardContentProps) {
     const router = useRouter();
 
     const handlePrevMonth = () => {
@@ -55,12 +48,16 @@ export function DashboardContent({ data, currentMonth, currentYear }: DashboardC
     if (!data) {
         return (
             <GlassCard className="p-6 text-center">
-                <p className="text-muted text-sm">Gagal memuat data</p>
+                <p className="text-muted text-sm">Gagal memuat Dashboard</p>
+                <p className="text-muted-foreground text-xs mt-1">
+                    {errorMessage || 'Coba refresh halaman atau cek koneksi database.'}
+                </p>
             </GlassCard>
         );
     }
 
     const monthName = new Date(currentYear, currentMonth - 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+    const netLabel = data.netIncome >= 0 ? '+' : '';
 
     return (
         <>
@@ -74,6 +71,10 @@ export function DashboardContent({ data, currentMonth, currentYear }: DashboardC
                     <ChevronRight className="w-5 h-5" />
                 </button>
             </div>
+
+            <h2 className="text-xs text-muted uppercase tracking-widest font-medium px-1">
+                Saldo Aktual
+            </h2>
 
             {/* Balance */}
             <GlassCard className="p-5">
@@ -102,8 +103,8 @@ export function DashboardContent({ data, currentMonth, currentYear }: DashboardC
                 Ringkasan {monthName}
             </h2>
 
-            {/* Income / Expense Row */}
-            <div className="grid grid-cols-2 gap-3">
+            {/* Monthly Metrics */}
+            <div className="grid grid-cols-3 gap-3">
                 <GlassCard className="p-4">
                     <div className="flex items-center gap-2 mb-2">
                         <ArrowUpRight className="w-3.5 h-3.5 text-foreground" />
@@ -122,24 +123,32 @@ export function DashboardContent({ data, currentMonth, currentYear }: DashboardC
                         {data.totalExpense > 0 ? formatRupiah(data.totalExpense) : 'Rp0'}
                     </p>
                 </GlassCard>
+                <GlassCard className="p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                        <span className="text-xs text-muted">Net</span>
+                    </div>
+                    <p className={`text-base font-semibold tabular-nums ${data.netIncome < 0 ? 'text-danger' : 'text-foreground'}`}>
+                        {netLabel}{formatRupiah(data.netIncome)}
+                    </p>
+                </GlassCard>
             </div>
 
             {/* Chart */}
             <GlassCard className="p-5">
-                <h2 className="text-xs text-muted uppercase tracking-widest font-medium mb-4">Distribusi</h2>
+                <h2 className="text-xs text-muted uppercase tracking-widest font-medium mb-4">Distribusi Kategori</h2>
                 <ExpenseDonutChart
                     data={data.categoryBreakdown.map(cat => ({
-                        name: CATEGORY_LABELS[cat.type] || cat.name,
+                        name: cat.name,
                         value: cat.total,
-                        color: MONO_COLORS[cat.type] || '#666',
+                        color: cat.color,
                     }))}
                 />
                 {data.categoryBreakdown.length > 0 && (
                     <div className="flex flex-wrap justify-center gap-x-5 gap-y-2 mt-4">
                         {data.categoryBreakdown.map((cat) => (
-                            <div key={cat.type} className="flex items-center gap-2">
-                                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: MONO_COLORS[cat.type] || '#666' }} />
-                                <span className="text-xs text-muted">{CATEGORY_LABELS[cat.type] || cat.name}</span>
+                            <div key={cat.name} className="flex items-center gap-2">
+                                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: cat.color }} />
+                                <span className="text-xs text-muted">{cat.name}</span>
                             </div>
                         ))}
                     </div>
@@ -148,7 +157,8 @@ export function DashboardContent({ data, currentMonth, currentYear }: DashboardC
 
             {/* Trend Chart */}
             <GlassCard className="p-5">
-                <h2 className="text-xs text-muted uppercase tracking-widest font-medium mb-4">Tren Pengeluaran</h2>
+                <h2 className="text-xs text-muted uppercase tracking-widest font-medium mb-1">Tren Pengeluaran</h2>
+                <p className="text-xs text-muted-foreground mb-4">Akumulasi harian bulan ini</p>
                 <SpendingTrendChart data={data.spendingTrend} />
             </GlassCard>
 

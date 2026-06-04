@@ -158,32 +158,32 @@ Tujuan: Log menjadi audit trail utama yang bisa dicari dan diekspor dengan benar
 
 Tujuan: Dashboard memberi insight yang tepat tanpa scope yang rancu.
 
-- [ ] Pisahkan visual area `Saldo Saat Ini` dan `Ringkasan Bulanan`.
+- [x] Pisahkan visual area `Saldo Saat Ini` dan `Ringkasan Bulanan`.
   - Area: `src/components/dashboard/DashboardContent.tsx`
   - Alasan: global vs bulanan tidak bercampur.
 
-- [ ] Tambahkan metric `Net Bulan Ini`.
+- [x] Tambahkan metric `Net Bulan Ini`.
   - Area: `src/actions/dashboard.actions.ts`, `src/components/dashboard/DashboardContent.tsx`
   - Alasan: menggantikan kebutuhan melihat `income - expense` bulanan tanpa menyebutnya saldo keseluruhan.
 
-- [ ] Putuskan chart distribusi by category type atau category name.
+- [x] Putuskan chart distribusi by category type atau category name.
   - Area: product decision
   - Opsi A: by type untuk ringkasan kasar.
   - Opsi B: by category name untuk insight praktis.
 
-- [ ] Jika pilih by category name, ubah aggregate dashboard.
+- [x] Jika pilih by category name, ubah aggregate dashboard.
   - Area: `src/actions/dashboard.actions.ts`
   - Alasan: chart menjadi lebih informatif.
 
-- [ ] Tambahkan empty state chart yang lebih jelas saat belum ada expense.
+- [x] Tambahkan empty state chart yang lebih jelas saat belum ada expense.
   - Area: `src/components/charts/ExpenseDonutChart.tsx`, `src/components/dashboard/DashboardContent.tsx`
   - Alasan: chart kosong tidak terasa rusak.
 
-- [ ] Pastikan trend pengeluaran mengakumulasi harian sesuai ekspektasi.
+- [x] Pastikan trend pengeluaran mengakumulasi harian sesuai ekspektasi.
   - Area: `src/actions/dashboard.actions.ts`, `src/components/charts/SpendingTrendChart.tsx`
   - Alasan: perlu jelas apakah trend harian per hari atau cumulative.
 
-- [ ] Tambahkan loading/error state dashboard yang lebih informatif.
+- [x] Tambahkan loading/error state dashboard yang lebih informatif.
   - Area: `src/app/(app)/dashboard/loading.tsx`, `src/components/dashboard/DashboardContent.tsx`
   - Alasan: saat data gagal, user butuh konteks.
 
